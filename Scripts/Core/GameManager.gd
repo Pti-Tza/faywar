@@ -1,5 +1,5 @@
 extends Node
-class_name BattleTechGameManager
+class_name GameManager
 
 # Game state
 enum GameState { INIT, PLAYING, PAUSED, GAME_OVER }
