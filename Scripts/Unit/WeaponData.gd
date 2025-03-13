@@ -1,5 +1,5 @@
 class_name WeaponData
-extends Resource
+extends ComponentData
 
 enum WeaponType {
     BALLISTIC,
@@ -8,7 +8,7 @@ enum WeaponType {
 }
 
 @export_category("Base Properties")
-@export var weapon_name: String = "Unnamed Weapon"
+
 @export var weapon_type: WeaponType = WeaponType.BALLISTIC
 @export var damage: float = 10.0
 @export var heat_generation: float = 4.0
