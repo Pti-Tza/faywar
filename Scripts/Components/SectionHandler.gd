@@ -1,6 +1,6 @@
-class_name SectionHandler
-extends Node
 
+extends Node
+class_name SectionHandler
 ## Emitted when armor takes damage (amount, remaining)
 signal armor_damaged(amount: float, remaining: float)
 ## Emitted when structure takes damage (amount, remaining)

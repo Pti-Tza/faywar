@@ -33,27 +33,41 @@ func _ready() -> void:
 # Core Grid Generation ------------------------------------------------------
 func generate_hex_grid() -> void:
     for q in range(-grid_radius, grid_radius + 1):
-        r1 = max(-grid_radius, -q - grid_radius)
-        r2 = min(grid_radius, -q + grid_radius)
+        var r1 = max(-grid_radius, -q - grid_radius)
+        var r2 = min(grid_radius, -q + grid_radius)
+        
         for r in range(r1, r2 + 1):
             var cell = HexCell.new(q, r)
+            cell.grid_manager = self
             cell.position = axial_to_world(q, r)
             hex_grid[Vector2i(q, r)] = cell
             add_child(cell)
+    
     emit_signal("grid_initialized")
 
 func initialize_astar() -> void:
     astar = AStar3D.new()
+    
+    # First add all points
     for cell in hex_grid.values():
         var point_id = _get_astar_id(cell.q, cell.r)
         astar.add_point(point_id, cell.position)
     
+    # Then connect neighbors with proper weights
     for cell in hex_grid.values():
+        var from_id = _get_astar_id(cell.q, cell.r)
         for neighbor in get_neighbors(cell.q, cell.r):
-            var neighbor_id = _get_astar_id(neighbor.q, neighbor.r)
-            if astar.has_point(neighbor_id):
-                var cost = _calculate_movement_cost(cell, hex_grid[neighbor])
-                astar.connect_points(_get_astar_id(cell.q, cell.r), neighbor_id, true, cost)
+            var to_id = _get_astar_id(neighbor.q, neighbor.r)
+            if astar.has_point(to_id):
+                var cost = _calculate_movement_cost(cell, neighbor)
+                
+                # Connect points (bidirectional) then set weight
+                astar.connect_points(from_id, to_id, true)
+                astar.set_point_weight_scale(from_id, cost)
+
+                # Set reverse weight since connection is bidirectional
+
+                astar.set_point_weight_scale(to_id, cost)
 
 # Coordinate Conversions ----------------------------------------------------
 func axial_to_world(q: int, r: int) -> Vector3:
@@ -123,13 +137,24 @@ func get_neighbors(q: int, r: int) -> Array[HexCell]:
 func get_cells_in_range(center: Vector2i, range: int) -> Array[HexCell]:
     var results = []
     for q in range(-range, range + 1):
-        for r in max(-range, -q - range), min(range, -q + range) + 1:
+        # Calculate valid r range for current q
+        var r_start = max(-range, -q - range)
+        var r_end = min(range, -q + range)
+        
+        for r in range(r_start, r_end + 1):
+            # Calculate cube coordinate s
             var s = -q - r
-            if abs(q) + abs(r) + (abs(s) / 2) <= range:
+            
+            # Calculate proper hexagonal distance
+            var distance = (abs(q) + abs(r) + abs(s)) / 2
+            
+            if distance <= range:
+                # Offset by center coordinates
                 var coord = Vector2i(center.x + q, center.y + r)
                 if hex_grid.has(coord):
                     results.append(hex_grid[coord])
-return results
+    
+    return results
 
 # Unit Management -----------------------------------------------------------
 func place_unit(unit: Node3D, q: int, r: int) -> bool:
@@ -139,6 +164,12 @@ func place_unit(unit: Node3D, q: int, r: int) -> bool:
         unit.global_position = cell.position
         return true
     return false
+
+func get_unit_cell(unit: Node3D) -> HexCell:
+    for cell in hex_grid.values():
+        if cell.unit == unit:
+            return cell
+    return null
 
 func move_unit(unit: Node3D, target_q: int, target_r: int) -> bool:
     var current_cell = get_unit_cell(unit)
@@ -150,16 +181,12 @@ func move_unit(unit: Node3D, target_q: int, target_r: int) -> bool:
         current_cell.unit = null
         target_cell.unit = unit
         unit.global_position = target_cell.position
-        emit_signal("unit_moved", unit, Vector3i(current_cell.q, current_cell.r), 
-                   Vector3i(target_cell.q, target_cell.r))
+        # Add elevation to Vector3i (third parameter)
+        emit_signal("unit_moved", unit, 
+            Vector3i(current_cell.q, current_cell.r, current_cell.elevation), 
+            Vector3i(target_cell.q, target_cell.r, target_cell.elevation))
         return true
     return false
-
-func get_unit_cell(unit: Node3D) -> HexCell:
-    for cell in hex_grid.values():
-        if cell.unit == unit:
-            return cell
-    return null
 
 # Helper Methods ------------------------------------------------------------
 func _get_astar_id(q: int, r: int) -> int:
@@ -190,4 +217,4 @@ func draw_debug_grid() -> void:
                 0,
                 hex_size.y * sin(angle_rad + deg_to_rad(60))
             )
-            DebugDraw3D.draw_line(point, next_point, Color.WHITE, 0.1)
+            #DebugDraw3D.draw_line(point, next_point, Color.WHITE, 0.1)

@@ -1,7 +1,8 @@
-# SectionData.gd
-class_name SectionData
-extends Resource
 
+# SectionData.gd
+
+extends Resource
+class_name SectionData
 ## Section definition with static properties
 var section_name: String 
 var max_armor: float = 50.0

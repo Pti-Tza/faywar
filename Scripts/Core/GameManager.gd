@@ -19,6 +19,31 @@ signal game_phase_changed(new_phase: GamePhase)
 signal turn_advanced(new_turn: int)
 signal active_player_changed(new_player_id: int)
 
+@export var ai_controller: PackedScene
+@export var player_controller: PackedScene
+var active_controller: BaseController
+
+func start_turn(unit: Node) -> void:
+    if unit.is_player_controlled:
+        active_controller = player_controller.instantiate()
+    else:
+        active_controller = ai_controller.instantiate()
+    
+    add_child(active_controller)
+    active_controller.turn_started.connect(_on_controller_turn_started)
+    active_controller.turn_ended.connect(_on_controller_turn_ended)
+    active_controller.begin_turn(unit)
+
+func _on_controller_turn_ended(controller: BaseController):
+    controller.queue_free()
+    advance_turn()
+
+# Replace player with AI at runtime
+func enable_ai_control(unit: Node) -> void:
+    unit.is_player_controlled = false
+    unit.controller = ai_controller.instantiate()
+
+
 # -------------------------------
 # Core Functions
 # -------------------------------

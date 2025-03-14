@@ -1,4 +1,4 @@
-class_name BattleTechAttackSystem
+class_name AttackSystem
 extends Node
 
 signal attack_resolved(attacker: Node, target: Node, result: Dictionary)

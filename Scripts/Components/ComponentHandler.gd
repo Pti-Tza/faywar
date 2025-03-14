@@ -1,6 +1,6 @@
-class_name ComponentHandler
-extends Node
 
+extends Node
+class_name ComponentHandler
 ## Emitted when component's health changes, provides remaining health
 signal component_damaged(health_remaining: float)
 ## Emitted when component's health reaches zero

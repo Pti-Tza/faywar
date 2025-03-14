@@ -1,35 +1,6 @@
-class_name TerrainData
+
 extends Resource
-
-# Terrain type definition
-class TerrainType:
-    var id: String
-    var movement_cost: float
-    var defense_bonus: int
-    var elevation: int
-    var is_impassable: bool
-    var heat_modifier: float
-    var visual_material: Material
-    var audio_footstep: AudioStream
-
-    func _init(
-        id: String,
-        movement_cost: float = 1.0,
-        defense_bonus: int = 0,
-        elevation: int = 0,
-        is_impassable: bool = false,
-        heat_modifier: float = 0.0,
-        visual_material: Material = null,
-        audio_footstep: AudioStream = null
-    ):
-        self.id = id
-        self.movement_cost = movement_cost
-        self.defense_bonus = defense_bonus
-        self.elevation = elevation
-        self.is_impassable = is_impassable
-        self.heat_modifier = heat_modifier
-        self.visual_material = visual_material
-        self.audio_footstep = audio_footstep
+class_name TerrainData
 
 # Terrain database
 @export var terrain_types: Array[TerrainType] = []

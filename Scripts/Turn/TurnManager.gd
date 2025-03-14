@@ -10,16 +10,16 @@ var unit_initiatives: Dictionary = {}  # Unit: int
 var current_unit_index: int = -1
 
 # Signals
-signal initiative_rolled(unit: Unit, value: int)
-signal unit_turn_started(unit: Unit)
-signal unit_turn_ended(unit: Unit)
+signal initiative_rolled(unit: UnitHandler, value: int)
+signal unit_turn_started(unit: UnitHandler)
+signal unit_turn_ended(unit: UnitHandler)
 signal all_units_acted
 
 # Dependencies
 @onready var game_manager: GameManager = get_node("/root/GameManager")
 
 # -------------------------------
-# Public API
+#region Public API
 # -------------------------------
 
 func initialize_units(unit_list: Array) -> void:
@@ -50,11 +50,13 @@ func roll_initiative() -> void:
     _apply_tiebreakers()
     start_unit_turn(units[0])
 
+#endregion
+
 # -------------------------------
-# Turn Flow
+#region Turn Flow
 # -------------------------------
 
-func start_unit_turn(unit: Unit) -> void:
+func start_unit_turn(unit: UnitHandler) -> void:
     if !unit.is_alive:
         advance_to_next_unit()
         return
@@ -64,7 +66,7 @@ func start_unit_turn(unit: Unit) -> void:
     emit_signal("unit_turn_started", unit)
     unit.start_turn()
 
-func end_unit_turn(unit: Unit) -> void:
+func end_unit_turn(unit: UnitHandler) -> void:
     if !unit.is_alive: units.erase(unit)
     emit_signal("unit_turn_ended", unit)
     unit.end_turn()
@@ -76,8 +78,10 @@ func end_unit_turn(unit: Unit) -> void:
     else:
         start_unit_turn(units[current_unit_index + 1])
 
+#endregion
+
 # -------------------------------
-# Helpers
+#region Helpers
 # -------------------------------
 
 func _apply_tiebreakers() -> void:
@@ -103,11 +107,12 @@ func _apply_tiebreakers() -> void:
 func _clean_destroyed_units() -> void:
     units = units.filter(func(u): return u.is_alive)
 
-func _sort_units_by_initiative(a: Unit, b: Unit) -> bool:
+func _sort_units_by_initiative(a: UnitHandler, b: UnitHandler) -> bool:
     return unit_initiatives[a] > unit_initiatives[b]
 
+#endregion
 # -------------------------------
-# Phase Handling
+#region Phase Handling
 # -------------------------------
 
 func _on_game_phase_changed(new_phase: GameManager.GamePhase) -> void:
@@ -122,3 +127,4 @@ func _on_game_phase_changed(new_phase: GameManager.GamePhase) -> void:
 func reset_turn_order() -> void:
     current_unit_index = -1
     initialize_units(UnitManager.get_all_units())  # Re-register surviving units
+    #endregion

@@ -1,5 +1,6 @@
-class_name WeaponData
+
 extends ComponentData
+class_name WeaponData
 
 enum WeaponType {
     BALLISTIC,
