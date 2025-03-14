@@ -3,7 +3,7 @@
 # Implements BattleTech-specific rules for unit destruction and status effects
 
 extends Node
-class_name BattleTechUnitManager
+class_name UnitManager
 
 ### Signals ###
 signal unit_spawned(unit: Node, position: Vector3)  # Unit created and placed

@@ -1,147 +1,179 @@
+# game_manager.gd
 extends Node
 class_name GameManager
+## Main game coordination system handling turn sequence, phase management, 
+## and high-level game rules enforcement
 
-# Game state
-enum GameState { INIT, PLAYING, PAUSED, GAME_OVER }
-enum GamePhase { INITIATIVE, MOVEMENT, ATTACK, HEAT, END }
-
-var current_state: GameState = GameState.INIT:
-    set = change_game_state
-var current_phase: GamePhase = GamePhase.INITIATIVE:
-    set = change_game_phase
-var current_turn: int = 1
-var active_player_id: int = -1  # -1 = unassigned
-var players: Array = []
-
-# Signals
+### REGION: Signals -----------------------------------------------------------
 signal game_state_changed(new_state: GameState)
 signal game_phase_changed(new_phase: GamePhase)
 signal turn_advanced(new_turn: int)
 signal active_player_changed(new_player_id: int)
 
-@export var ai_controller: PackedScene
+### REGION: Enums -------------------------------------------------------------
+enum GameState { INIT, PLAYING, PAUSED, GAME_OVER }
+enum GamePhase { INITIATIVE, MOVEMENT, ATTACK, HEAT, END }
+
+### REGION: Dependencies ------------------------------------------------------
+## Reference to initiative tracking system
+@export var initiative_system: Node
+## Reference to heat management system
+@export var heat_system: HeatSystem
+## Reference to unit management system
+@export var unit_manager: Node
+## Player controller scene template
 @export var player_controller: PackedScene
-var active_controller: BaseController
+## AI controller scene template
+@export var ai_controller: PackedScene
 
-func start_turn(unit: Node) -> void:
-    if unit.is_player_controlled:
-        active_controller = player_controller.instantiate()
-    else:
-        active_controller = ai_controller.instantiate()
-    
-    add_child(active_controller)
-    active_controller.turn_started.connect(_on_controller_turn_started)
-    active_controller.turn_ended.connect(_on_controller_turn_ended)
-    active_controller.begin_turn(unit)
+### REGION: Game State --------------------------------------------------------
+var current_state: GameState = GameState.INIT:
+    set(value):
+        if current_state != value:
+            current_state = value
+            game_state_changed.emit(value)
+            
+var current_phase: GamePhase = GamePhase.INITIATIVE:
+    set(value):
+        if current_phase != value:
+            current_phase = value
+            game_phase_changed.emit(value)
+            _handle_phase_transition()
 
-func _on_controller_turn_ended(controller: BaseController):
-    controller.queue_free()
-    advance_turn()
+var current_turn: int = 1
+var active_player_id: int = -1  # -1 indicates no active player
+var players: Array = []
 
-# Replace player with AI at runtime
-func enable_ai_control(unit: Node) -> void:
-    unit.is_player_controlled = false
-    unit.controller = ai_controller.instantiate()
-
-
-# -------------------------------
-# Core Functions
-# -------------------------------
+### REGION: Turn Execution ----------------------------------------------------
+var active_controller: BaseController = null
 
 func _ready() -> void:
+    _validate_dependencies()
     initialize_players()
     change_game_state(GameState.PLAYING)
     start_new_turn()
 
-func initialize_players() -> void:
-    # Connect to your player config system
-    players = []  # Replace with actual player setup
+func _validate_dependencies() -> void:
+    assert(initiative_system != null, "InitiativeSystem not assigned!")
+    assert(heat_system != null, "HeatSystem not assigned!")
+    assert(unit_manager != null, "UnitManager not assigned!")
 
-func change_game_state(new_state: GameState) -> void:
-    if current_state == new_state:
-        return
-    if current_state == GameState.GAME_OVER && new_state != GameState.GAME_OVER:
-        push_error("Invalid state transition from GAME_OVER")
-        return
-    current_state = new_state
-    emit_signal("game_state_changed", new_state)
-
-func change_game_phase(new_phase: GamePhase) -> void:
-    if current_phase == new_phase:
-        return
-    if current_state != GameState.PLAYING && new_phase != GamePhase.INITIATIVE:
-        push_error("Can't change phase while game isn't playing")
-        return
-    current_phase = new_phase
-    emit_signal("game_phase_changed", new_phase)
-    _handle_phase_start()
-
-func _handle_phase_start() -> void:
-    match current_phase:
-        GamePhase.INITIATIVE:
-            InitiativeSystem.roll_initiative()
-        GamePhase.HEAT:
-            HeatSystem.resolve_all_heat()
-
-# -------------------------------
-# Turn Handling
-# -------------------------------
+### REGION: Public API --------------------------------------------------------
 
 func start_new_turn() -> void:
-    var initiative_order = InitiativeSystem.get_order()
+    """Begin a new full turn sequence with initiative rolling"""
+    var initiative_order = initiative_system.get_initiative_order()
+    
     if initiative_order.is_empty():
         push_error("No units available for new turn")
         end_game()
         return
     
     current_turn += 1
-    emit_signal("turn_advanced", current_turn)
-    change_game_phase(GamePhase.INITIATIVE)
+    turn_advanced.emit(current_turn)
+    _set_game_phase(GamePhase.INITIATIVE)
     set_active_player(initiative_order[0].player_id)
 
 func advance_phase() -> void:
+    """Progress to next phase in BattleTech sequence"""
     if current_state != GameState.PLAYING:
-        push_warning("Can't advance phase while game is ", GameState.keys()[current_state])
+        push_warning("Can't advance phase while game is %s" % GameState.keys()[current_state])
         return
-
+    
     match current_phase:
-        GamePhase.INITIATIVE:
-            if !_all_units_ready():
-                return
-            change_game_phase(GamePhase.MOVEMENT)
-        GamePhase.MOVEMENT:
-            change_game_phase(GamePhase.ATTACK)
-        GamePhase.ATTACK:
-            change_game_phase(GamePhase.HEAT)
-        GamePhase.HEAT:
-            change_game_phase(GamePhase.END)
-        GamePhase.END:
-            start_new_turn()
-
-# -------------------------------
-# Player Management
-# -------------------------------
+        GamePhase.INITIATIVE: _set_game_phase(GamePhase.MOVEMENT)
+        GamePhase.MOVEMENT:   _set_game_phase(GamePhase.ATTACK)
+        GamePhase.ATTACK:     _set_game_phase(GamePhase.HEAT)
+        GamePhase.HEAT:       _set_game_phase(GamePhase.END)
+        GamePhase.END:        start_new_turn()
 
 func set_active_player(player_id: int) -> void:
-    if active_player_id == player_id:
-        return
-    if !players.any(func(p): return p.id == player_id):
-        push_error("Invalid player ID: ", player_id)
-        return
-    active_player_id = player_id
-    emit_signal("active_player_changed", player_id)
+    """Set currently acting player with validation"""
+    if active_player_id == player_id: return
+    
+    if players.any(func(p): return p.id == player_id):
+        active_player_id = player_id
+        active_player_changed.emit(player_id)
+    else:
+        push_error("Attempted to set invalid player ID: %d" % player_id)
 
-# -------------------------------
-# Helper Functions
-# -------------------------------
+### REGION: Phase Handling ----------------------------------------------------
 
-func _all_units_ready() -> bool:
-    # Check if all AI/players have prepped their turns
-    return UnitManager.are_all_units_ready()
+func _handle_phase_transition() -> void:
+    """Execute phase-specific initialization logic"""
+    match current_phase:
+        GamePhase.INITIATIVE:
+            initiative_system.roll_initiative()
+            _activate_first_unit()
+            
+        GamePhase.MOVEMENT:
+            _enable_movement_controls()
+            
+        GamePhase.ATTACK:
+            _enable_attack_controls()
+            
+        GamePhase.HEAT:
+            heat_system.process_heat_for_units(unit_manager.get_all_units())
+            
+        GamePhase.END:
+            _cleanup_turn()
 
-func _resolve_heat_damage() -> void:
-    HeatSystem.process_heat_for_units(UnitManager.get_all_units())
+func _activate_first_unit() -> void:
+    """Start turn for first unit in initiative order"""
+    var next_unit = initiative_system.get_next_unit()
+    if next_unit:
+        start_unit_turn(next_unit)
+    else:
+        push_error("No units in initiative order")
+        end_game()
+
+func _cleanup_turn() -> void:
+    """Perform end-of-turn maintenance"""
+    unit_manager.reset_all_unit_states()
+    initiative_system.clear_current_order()
+
+### REGION: Unit Control ------------------------------------------------------
+
+func start_unit_turn(unit: Node) -> void:
+    """Initialize appropriate controller for unit"""
+    if active_controller:
+        active_controller.queue_free()
+    
+    active_controller = _create_controller(unit)
+    add_child(active_controller)
+    
+    active_controller.turn_ended.connect(_on_controller_turn_ended)
+    active_controller.begin_turn(unit)
+
+func _create_controller(unit: Node) -> BaseController:
+    """Instantiate correct controller type based on unit"""
+    return (player_controller if unit.is_player_controlled 
+            else ai_controller).instantiate()
+
+func _on_controller_turn_ended(_controller: BaseController) -> void:
+    """Handle completed unit turn"""
+    active_controller.queue_free()
+    active_controller = null
+    advance_phase()
+
+### REGION: Game Flow Control -------------------------------------------------
 
 func end_game() -> void:
+    """Transition to game over state"""
     change_game_state(GameState.GAME_OVER)
     get_tree().paused = true
+    # Implement game over screen logic here
+
+### REGION: Helper Methods ----------------------------------------------------
+
+func initialize_players() -> void:
+    """Initialize player data - implement with actual player setup"""
+    players = []
+    # Example: players.append(Player.new(1, "Player 1"))
+
+func _set_game_phase(new_phase: GamePhase) -> void:
+    """Wrapper for phase changes with validation"""
+    if current_state == GameState.PLAYING:
+        current_phase = new_phase
+    else:
+        push_warning("Phase change blocked in state: %s" % GameState.keys()[current_state])
