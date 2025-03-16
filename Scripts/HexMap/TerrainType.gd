@@ -1,41 +1,44 @@
+# TerrainType.gd
 
 extends Resource
 class_name TerrainType
+## Represents a single terrain type with gameplay properties and visual presentation
+##
+## Used to configure how different terrain affects units, pathfinding, and combat
 
-# Terrain type definition
-var id: String
-var movement_cost: float
-var defense_bonus: int
-var elevation: int
-var is_impassable: bool
-var heat_modifier: float
-var visual_material: Material
-var audio_footstep: AudioStream
+@export_category("Core Identification")
+## Unique identifier for this terrain type (e.g., "forest", "urban")
+@export var id: String = "terrain"
+## Display name for UI purposes
+@export var display_name: String = "Terrain"
 
-var materials: Array[StandardMaterial3D] = []
-var transition_priority: int = 0
-var texture_variations: int = 1
+@export_category("Gameplay Properties")
+## Base movement cost for standard bipedal units
+@export_range(0.1, 5.0) var movement_cost: float = 1.0
+## Percentage defense bonus (0-100) when units are in this terrain
+@export_range(0, 100, 1) var defense_bonus: int = 0
+## Blocks all movement if enabled
+@export var impassable: bool = false
+## Heat generation modifier (+/- percentage)
+@export_range(-1.0, 1.0, 0.05) var heat_modifier: float = 0.0
 
-func _init(
-    id: String,
-    movement_cost: float = 1.0,
-    defense_bonus: int = 0,
-    elevation: int = 0,
-    is_impassable: bool = false,
-    heat_modifier: float = 0.0,
-    visual_material: Material = null,
-    audio_footstep: AudioStream = null
-    ):
-        self.id = id
-        self.movement_cost = movement_cost
-        self.defense_bonus = defense_bonus
-        self.elevation = elevation
-        self.is_impassable = is_impassable
-        self.heat_modifier = heat_modifier
-        self.visual_material = visual_material
-        self.audio_footstep = audio_footstep
+@export_category("Visual Properties")
+## Base material for this terrain type
+@export var visual_material: Material
+## Array of material variations for visual diversity
+@export var material_variations: Array[Material]
+## Particle effect for environmental interactions
+#@export var footstep_effect: GPUParticles3D
 
-func get_random_variant_material() -> StandardMaterial3D:
-        if materials.is_empty():
-            return null
-        return materials[randi() % materials.size()]
+@export_category("Audio Properties")
+## Footstep sound for standard movement
+@export var footstep_audio: AudioStream
+## Special movement sound (e.g., water splashing)
+@export var special_move_audio: AudioStream
+
+func _validate_properties() -> void:
+    # Ensure ID is lowercase and sanitized
+    id = id.to_lower().strip_edges()
+    movement_cost = clampf(movement_cost, 0.1, 5.0)
+    defense_bonus = clampi(defense_bonus, 0, 100)
+    heat_modifier = clampf(heat_modifier, -1.0, 1.0)

@@ -1,7 +1,5 @@
 extends Node3D
-
 class_name UnitHandler
-
 
 ## Emitted when any section takes damage
 signal unit_damaged(section_name: String, damage: float)
@@ -10,15 +8,23 @@ signal unit_destroyed
 ## Emitted when heat level changes
 signal heat_changed(new_value: float)
 
+## Unique identifier system for mission-critical units
+@export var unit_id: String = ""  # "enemy_commander_1"
+
+
 ## Reference to UnitData resource containing unit configuration
-var unit_data: UnitData
+@export var unit_data: UnitData
 
 # Runtime state 
-var section_handlers: Array[SectionHandler] = []  # Child sections
-var current_heat: float = 0.0                     # Current heat level
+var section_handlers: Dictionary = {} # Child sections by name for faster lookup
+var current_heat: float = 0.0 # Current heat level
 
 # Initialize unit when added to scene tree
 func _ready():
+    if not unit_data:
+        push_error("UnitHandler: Missing unit_data reference")
+        queue_free()
+        return
     _initialize_sections()
     _connect_signals()
 
@@ -27,9 +33,11 @@ func _ready():
 ## @param damage: float - Amount of damage to apply
 func apply_damage(section_name: String, damage: float) -> void:
     var handler = _get_section_handler(section_name)
-    if handler:
-        handler.apply_damage(damage)
-        unit_damaged.emit(section_name, damage)
+    if not handler:
+        push_warning("UnitHandler: Section '%s' not found" % section_name)
+        return
+    handler.apply_damage(damage)
+    unit_damaged.emit(section_name, damage)
 
 ## Public method to apply heat to the unit
 ## @param heat: float - Amount of heat to add
@@ -43,20 +51,17 @@ func _initialize_sections() -> void:
     for section_data in unit_data.sections:
         var handler = SectionHandler.new()
         handler.section_data = section_data
-        section_handlers.append(handler)
+        section_handlers[section_data.section_name] = handler  # Use dictionary for faster lookup
         add_child(handler)
 
 # Connect section destruction signals
 func _connect_signals() -> void:
-    for handler in section_handlers:
+    for handler in section_handlers.values():
         handler.section_destroyed.connect(_on_section_destroyed)
 
 # Find section handler by name
 func _get_section_handler(section_name: String) -> SectionHandler:
-    for handler in section_handlers:
-        if handler.section_data.section_name == section_name:
-            return handler
-    return null
+    return section_handlers.get(section_name, null)
 
 # Handle section destruction event
 func _on_section_destroyed() -> void:
@@ -67,7 +72,11 @@ func _on_section_destroyed() -> void:
 # Check if all critical sections are destroyed
 func _check_critical_destruction() -> bool:
     for section_name in unit_data.critical_sections:
-        if _get_section_handler(section_name).current_structure > 0:
+        var handler = _get_section_handler(section_name)
+        if not handler:
+            push_error("UnitHandler: Critical section '%s' not found" % section_name)
+            return false
+        if handler.current_structure > 0:
             return false
     return true
 
@@ -79,5 +88,5 @@ func _check_overheat() -> void:
 # Handle overheating consequences
 func _trigger_shutdown() -> void:
     # Apply emergency damage to all sections
-    for handler in section_handlers:
-        handler.apply_damage(5.0)  # Constant emergency damage value
+    for handler in section_handlers.values():
+        handler.apply_damage(5.0) # Constant emergency damage value

@@ -23,24 +23,30 @@ var unit_registry: Dictionary = {}        # { uuid: { node, profile, team } }
 @onready var hex_grid = $HexGridManager    # Spatial tracking
 @onready var turn_manager = $TurnManager   # Turn sequencing
 
-
+enum MobilityType {
+    BIPEDAL,    # Humanoid mechs/units
+    WHEELED,    # Wheeled vehicles
+    HOVER,      # Hovercraft/floating units
+    TRACKED,    # Tank-like units
+    AERIAL      # Flying units (limited)
+}
 # --------------------------
-# Public API
+#region Public API
 # --------------------------
 
 ## Spawns a unit using BattleTech unit profile data
 ## @param profile: UnitProfile - Contains stats/configuration
 ## @param spawn_hex: Vector3i - Initial grid position
 ## @param team: int - Controlling faction/player
-func spawn_unit(profile: UnitProfile, spawn_hex: Vector3i, team: int = -1) -> Node:
+func spawn_unit(profile: UnitProfile, spawn_hex: Vector3i, team: int = -1, id: String = _generate_unit_id(profile)) -> Node:
     # Validate critical profile data
     assert(profile != null, "UnitProfile cannot be null")
     assert(profile.unit_scene != null, "Missing unit scene in profile")
     
     # Instantiate and configure unit
     var unit = profile.unit_scene.instantiate()
-    unit.name = "%s_%s" % [profile.unit_name, unit.get_instance_id()]
-    unit.initialize(profile, team)
+    unit.name = "%s_%s" % [profile.unit_name, id]
+    unit.initialize(profile, team, id)
     
     # Register unit
     active_units.append(unit)
@@ -62,6 +68,9 @@ func spawn_unit(profile: UnitProfile, spawn_hex: Vector3i, team: int = -1) -> No
     emit_signal("unit_spawned", unit, spawn_hex)
     return unit
 
+func _generate_unit_id(profile: UnitProfile) -> String:
+    # Generate a unique unit ID based on profile and timestamp
+    return "%s_%d" % [profile.profile_id, Time.get_time_dict_from_system()]
 
 ## Gets all units belonging to a specific team
 ## @param team: int - Team ID to filter by
@@ -78,9 +87,10 @@ func get_units_in_hex(hex: Vector3i, include_wreckage: bool = false) -> Array:
     var source = active_units + (destroyed_units if include_wreckage else [])
     return source.filter(func(u): return hex_grid.world_to_hex(u.position) == hex)
 
+#endregion
 
 # --------------------------
-# Signal Handlers
+#region Signal Handlers
 # --------------------------
 
 ## Handles component damage events from units
@@ -125,9 +135,10 @@ func _on_unit_destroyed(unit: Node) -> void:
     emit_signal("unit_destroyed", unit, wreckage)
     unit.queue_free()
 
+#endregion
 
 # --------------------------
-# Core Logic
+#region Core Logic
 # --------------------------
 
 ## Handles BattleTech-specific section destruction consequences
@@ -162,9 +173,10 @@ func _cleanup_units() -> void:
         if destroyed_units[i].expiration_turns <= 0:
             destroyed_units.remove_at(i)
 
+#endregion
 
 # --------------------------
-# Helper Methods
+#region Helper Methods
 # --------------------------
 
 ## Validates unit positions after movement phase
@@ -179,3 +191,5 @@ func validate_unit_positions() -> void:
             ])
             # Auto-correct registry
             unit_registry[unit.uuid].hex = reported_hex
+
+#endregion            
