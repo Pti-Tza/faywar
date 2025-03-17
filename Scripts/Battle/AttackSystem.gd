@@ -1,57 +1,38 @@
-class_name AttackSystem
+# AttackSystem.gd
 extends Node
+
+class_name AttackSystem
 
 signal attack_resolved(attacker: Node, target: Node, result: Dictionary)
 
 const CRITICAL_THRESHOLD = 8
-const CLUSTER_TABLE = {  }
 
-var _weapon_handlers = {  }
+var _weapon_handlers = {
+    WeaponData.WeaponType.BALLISTIC: BallisticAttackHandler,
+    WeaponData.WeaponType.ENERGY: EnergyAttackHandler,
+    WeaponData.WeaponType.MISSILE: MissileAttackHandler
+}
 var _range_cache = {}
+@export var hex_grid_manager : HexGridManager
+@export var line_of_sight : LineOfSight 
 
 func resolve_attack(attacker: Node, target: Node, weapon_data: WeaponData) -> void:
-    var result = _base_attack_result(weapon_data)
-    
-    if !_validate_attack(attacker, target, weapon_data):
-        attack_resolved.emit(attacker, target, result)
+    var handler_class = _weapon_handlers.get(weapon_data.weapon_type)
+    if not handler_class:
+        push_error("No handler for weapon type: %s" % weapon_data.weapon_type)
+        attack_resolved.emit(attacker, target, {"valid": false, "reason": "No handler for weapon type"})
         return
     
-    var handler = _weapon_handlers[weapon_data.weapon_type]
-    result = await handler.call(attacker, target, weapon_data)
-    
-    _apply_post_attack_effects(attacker, result)
+    var handler = handler_class.new(attacker, target, weapon_data)
+    var result = handler.resolve_attack()
     attack_resolved.emit(attacker, target, result)
 
-func _validate_attack(attacker, target, weapon) -> bool:
-    var distance = HexGridManager.get_hex_distance(attacker, target)
+func _validate_attack(attacker: Node, target: Node, weapon_data: WeaponData) -> bool:
+    var distance = hex_grid_manager.get_hex_distance(attacker.current_hex, target.current_hex)
     return (
         attacker.heat_system.can_fire() &&
-        attacker.ammo_system.has_ammo(weapon) &&
-        LineOfSight.has_clear_path(attacker, target) &&
-        distance >= weapon.min_range &&
-        distance <= weapon.max_range
+        attacker.ammo_system.has_ammo(weapon_data) &&
+        line_of_sight.has_clear_path(attacker, target) &&
+        distance >= weapon_data.min_range &&
+        distance <= weapon_data.max_range
     )
-
-func _handle_missile_attack(attacker, target, weapon_data) -> Dictionary:
-    var result = _base_attack_result(weapon_data)
-    result.ammo_used = attacker.ammo_system.consume_ammo(weapon_data)
-    
-    if result.ammo_used <= 0: return result
-    
-    var missiles_hit = CLUSTER_TABLE[weapon_data.name][DiceRoller.roll_2d6()-2]
-    result.damage = missiles_hit * weapon_data.damage_per_missile
-    
-    for missile in missiles_hit:
-        var location = ComponentSystem.get_hit_location(target)
-        var dmg = weapon_data.damage_per_missile
-        _apply_damage_with_crit_check(target, dmg, location)
-    
-    result.hit = missiles_hit > 0
-    return result
-
-func _apply_post_attack_effects(attacker: Node, result: Dictionary) -> void:
-    if result.get("heat_generated", 0) > 0:
-        attacker.heat_system.check_shutdown()
-    
-    if result.get("ammo_explosion", false):
-        _handle_ammo_explosion(attacker, result.ammo_location)

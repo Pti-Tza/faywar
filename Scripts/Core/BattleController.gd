@@ -29,6 +29,7 @@ signal defeat_occurred
 @export var movement_system: MovementSystem
 @export var attack_system: AttackSystem
 
+
 @export_category("Combat Rules")
 ## Maximum number of rounds before automatic timeout
 @export var max_turns: int = 20

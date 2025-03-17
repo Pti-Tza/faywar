@@ -44,37 +44,35 @@ func _ready():
 # @param unit: Unit attempting to move
 # @param target_hex: Target HexCell or axial coordinates
 # @return: Dictionary { valid: bool, reason: String, cost: float }
-func validate_move(unit: UnitHandler, target_hex: Vector2i) -> Dictionary:
-    var origin = unit.current_hex
-    if origin == target_hex:
-        return {"valid": false, "reason": "No movement required", "cost": 0.0}
+func validate_move(unit: UnitHandler, target_hex: HexCell) -> Dictionary:
+    var origin_cell = hex_grid.get_cell(unit.current_hex.x, unit.current_hex.y)
+    var target_cell = target_hex
+    
+    var elevation_diff = target_cell.elevation - origin_cell.elevation
+    if abs(elevation_diff) > max_elevation_change:
+        return { "valid": false, "reason": "Exceeds elevation change limit", "cost": 0.0 }
     
     # Get pathfinding data
-    var path = hex_grid.find_unit_path(unit, hex_grid.axial_to_world(origin), hex_grid.axial_to_world(target_hex))
+    var path = hex_grid.find_unit_path(unit, origin_cell.position, target_cell.position)
     if path.size() == 0:
-        return {"valid": false, "reason": "No valid path", "cost": 0.0}
+        return { "valid": false, "reason": "No valid path", "cost": 0.0 }
     
     # Calculate total movement cost
     var total_cost = 0.0
     for i in range(1, path.size()):
-        var prev_hex = hex_grid.get_cell(path[i - 1].q, path[i - 1].r)
-        var curr_hex = hex_grid.get_cell(path[i].q, path[i].r)
+        var prev_hex = hex_grid.get_cell(path[i - 1].x, path[i - 1].y)
+        var curr_hex = hex_grid.get_cell(path[i].x, path[i].y)
         total_cost += curr_hex.get_movement_cost(unit.unit_data.mobility_type)
         total_cost += _calculate_elevation_cost(prev_hex, curr_hex)
         
         if curr_hex.terrain_data.is_impassable:
-            return {"valid": false, "reason": "Path contains impassable terrain", "cost": 0.0}
-    
-    # Check elevation constraints
-    var elevation_diff = target_hex.elevation - origin.elevation
-    if abs(elevation_diff) > max_elevation_change:
-        return {"valid": false, "reason": "Exceeds elevation change limit", "cost": 0.0}
+            return { "valid": false, "reason": "Path contains impassable terrain", "cost": 0.0 }
     
     # Check remaining movement points
     if unit.remaining_mp < total_cost:
-        return {"valid": false, "reason": "Insufficient movement points", "cost": 0.0}
+        return { "valid": false, "reason": "Insufficient movement points", "cost": 0.0 }
     
-    return {"valid": true, "reason": "", "cost": total_cost}
+    return { "valid": true, "reason": "", "cost": total_cost }
 ###
 
 ### 
@@ -82,7 +80,7 @@ func validate_move(unit: UnitHandler, target_hex: Vector2i) -> Dictionary:
 # @param unit: Unit to move
 # @param target_hex: Target coordinates
 # @return: bool - Movement success status
-func execute_move(unit: UnitHandler, target_hex: Vector2i) -> bool:
+func execute_move(unit: UnitHandler, target_hex: HexCell) -> bool:
     var validation = validate_move(unit, target_hex)
     if not validation.valid:
         movement_blocked.emit(unit, validation.reason)
@@ -90,13 +88,12 @@ func execute_move(unit: UnitHandler, target_hex: Vector2i) -> bool:
     
     # Update unit state
     unit.remaining_mp -= validation.cost
-    _movement_paths[unit.uuid] = hex_grid.get_path(unit.current_hex, target_hex)
+    _movement_paths[unit.uuid] = hex_grid.find_unit_path(unit, unit.current_hex, target_hex.axial_coord)
     
     # Begin movement animation/processing
     movement_started.emit(unit, _movement_paths[unit.uuid])
     return true
 ###
-
 ### 
 # Process end of movement phase
 # Called at turn end to finalize positions
@@ -110,7 +107,7 @@ func finalize_movement(unit: UnitHandler) -> void:
         hex_grid.move_unit(unit, target_cell.q, target_cell.r)
         unit.current_hex = Vector2i(target_cell.q, target_cell.r)
     
-    _movement_paths.remove(unit.uuid)
+    _movement_paths.erase(unit.uuid)
     movement_ended.emit(unit, true)
 ###
 
@@ -120,22 +117,24 @@ func finalize_movement(unit: UnitHandler) -> void:
 # @return: Array[HexCell] - Valid destination hexes
 func get_available_hexes(unit: UnitHandler) -> Array[HexCell]:
     var origin = unit.current_hex
-    var max_range = unit.stats.movement_range
+    var _max_range = unit.stats.movement_range
     
-    var visited: Set[Vector2i] = Set.new()
+    var visited: Dictionary = {}  # Use Dictionary to mimic Set behavior
     var queue = [origin]
+    var available_hexes: Array[HexCell] = []
     
     while queue.size() > 0:
         var current = queue.pop_front()
-        visited.add(current)
+        visited.get_or_add(current)
         
         for neighbor in hex_grid.get_neighbors(current.x, current.y):
             var cost = neighbor.get_movement_cost(unit.unit_data.mobility_type)
             if cost <= unit.remaining_mp and not visited.has(neighbor.axial_coord):
                 queue.append(neighbor.axial_coord)
-    return hex_grid.get_cells_in_range(origin, max_range)
+                available_hexes.append(neighbor)
+    
+    return available_hexes
 ###
-
 ### 
 # Calculate elevation change cost between hexes
 # @private
@@ -148,7 +147,7 @@ func _calculate_elevation_cost(from_cell: HexCell, to_cell: HexCell) -> float:
 
 ### 
 # Get unit's current hex coordinates
-func get_unit_hex(unit: UnitHandler) -> Vector2i:
+func get_unit_hex(unit: UnitHandler) -> Vector3i:
     return hex_grid.get_unit_cell(unit).axial_coord
 ###
 
@@ -156,5 +155,5 @@ func get_unit_hex(unit: UnitHandler) -> Vector2i:
 # Reset movement state after turn
 func reset_movement(unit: UnitHandler) -> void:
     unit.remaining_mp = unit.unit_data.base_movement
-    _movement_paths.remove(unit.uuid)
+    _movement_paths.erase(unit.uuid)
 ###

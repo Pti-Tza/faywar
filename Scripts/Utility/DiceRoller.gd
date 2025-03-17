@@ -17,28 +17,8 @@ enum RollType {
     EXPLODING       
 }
 
-## Signal: Emitted after any roll with full results
-## @param results: Array[int] - Individual die results
-## @param total: int - Processed total
-## @param metadata: Dictionary - Roll configuration
-signal dice_rolled(results: Array, total: int, metadata: Dictionary)
-
-## Signal: Emitted when critical success conditions met
-## @param metadata: Dictionary - Original roll parameters
-signal critical_success(metadata: Dictionary)
-
-## Signal: Emitted when critical failure conditions met 
-## @param metadata: Dictionary - Original roll parameters
-signal critical_failure(metadata: Dictionary)
-
-## Enable roll history tracking for debugging/replays
-@export var enable_history: bool = true
-
-## Maximum stored rolls in history (memory management)
-@export var max_history_size: int = 20
-
 # Internal storage for roll history
-var _history: Array = []
+static var _history: Array = []
 
 #-------------------------------------------------------------
 # Public API
@@ -57,10 +37,10 @@ var _history: Array = []
 ## @return: Dictionary {
 ##     results: Array[int],    # Raw die values
 ##     total: int,             # Processed result
-##     metadata: Dictionary,   # Roll config + timestamp
+##     metadata: Dictionary,   # Roll configuration + timestamp
 ##     dropped: Array[int]     # Dropped dice if applicable
 ## }
-func roll(
+static func roll(
     dice_count: int = 1,
     dice_sides: int = 6,
     modifier: int = 0,
@@ -71,7 +51,6 @@ func roll(
     if dice_sides < 2:
         push_error("Invalid dice sides: %d - must be ≥2" % dice_sides)
         return {}
-    
     # Capture roll metadata for signals/history
     var metadata = {
         "timestamp": Time.get_datetime_string_from_system(),
@@ -81,22 +60,18 @@ func roll(
         "roll_type": RollType.keys()[roll_type],
         "options": options
     }
-    
     # Core dice generation
     var results = _roll_dice(dice_count, dice_sides, options)
     # Result processing based on roll type
     var processed = _process_results(results, modifier, roll_type, options)
-    
     # History management
-    var history_entry = metadata.duplicate()
-    history_entry["raw_results"] = results
-    history_entry["processed_total"] = processed.total
-    _update_history(history_entry)
-    
-    # Event system
-    dice_rolled.emit(results, processed.total, metadata)
+    if get_enable_history():
+        var history_entry = metadata.duplicate()
+        history_entry["raw_results"] = results
+        history_entry["processed_total"] = processed.total
+        _update_history(history_entry)
+    # Event system (removed signals)
     _check_critical(results, processed.total, metadata)
-    
     return {
         "results": results,
         "total": processed.total,
@@ -107,21 +82,21 @@ func roll(
 ## BattleTech-optimized 2D6 roll with modifier
 ## @param modifier: Piloting/Gunnery skill modifier
 ## @return: Total result including modifier
-func roll_2d6(modifier: int = 0) -> int:
+static func roll_2d6(modifier: int = 0) -> int:
     var result = roll(2, 6, modifier)
     return result.total
 
 ## Batch roll for AI/mass combat calculations
 ## @param iterations: Number of times to repeat roll
 ## @return: Array of roll result dictionaries
-func batch_roll(
+static func batch_roll(
     iterations: int,
     dice_count: int,
     dice_sides: int,
     modifier: int = 0
 ) -> Array:
     var batch = []
-    for i in iterations:
+    for i in range(iterations):
         batch.append(roll(dice_count, dice_sides, modifier))
     return batch
 
@@ -131,25 +106,22 @@ func batch_roll(
 
 ## Generates raw dice results with optional exploding
 ## @private
-func _roll_dice(count: int, sides: int, options: Dictionary) -> Array:
+static func _roll_dice(count: int, sides: int, options: Dictionary) -> Array:
     var results = []
     var rng = RandomNumberGenerator.new()
     rng.randomize()
-    
-    for i in count:
+    for i in range(count):
         var result = rng.randi_range(1, sides)
         results.append(result)
-        
         # Handle exploding dice recursively
         if options.get("explode", false) && result == sides:
             var explosion = _roll_dice(1, sides, options)
             results.append_array(explosion)
-    
     return results
 
 ## Processes raw results based on roll type
 ## @private
-func _process_results(
+static func _process_results(
     results: Array,
     modifier: int,
     roll_type: RollType,
@@ -157,7 +129,6 @@ func _process_results(
 ) -> Dictionary:
     var processed = results.duplicate()
     var dropped = []
-    
     match roll_type:
         RollType.DROP_LOWEST:
             processed.sort()
@@ -167,11 +138,10 @@ func _process_results(
             dropped = [processed.pop_back()]
         RollType.SUCCESS_COUNT:
             var target = options.get("success_threshold", 5)
-            return {"total": processed.filter(func(r): return r >= target).size(), "dropped": []}
+            return {"total": results.filter(func(r): return r >= target).size(), "dropped": []}
         RollType.TARGET_NUMBER:
             var target = options.get("target_number", 10)
-            return {"total": (processed[0] + modifier) >= target, "dropped": []}
-    
+            return {"total": (results[0] + modifier) >= target, "dropped": []}
     return {
         "total": processed.reduce(func(a, b): return a + b, 0) + modifier,
         "dropped": dropped
@@ -179,11 +149,10 @@ func _process_results(
 
 ## Checks for critical success/failure conditions
 ## @private
-func _check_critical(results: Array, total: int, metadata: Dictionary) -> void:
+static func _check_critical(results: Array, total: int, metadata: Dictionary) -> void:
     var sides = metadata.dice_sides
     var crit_success = false
     var crit_fail = false
-    
     # BattleTech-specific critical checks
     if metadata.dice_count == 2 && metadata.dice_sides == 6:
         # Standard BattleTech critical thresholds
@@ -199,11 +168,12 @@ func _check_critical(results: Array, total: int, metadata: Dictionary) -> void:
                 var max_possible = metadata.dice_count * sides
                 crit_success = total >= max_possible * 0.9  # Top 10%
                 crit_fail = total <= max_possible * 0.1     # Bottom 10%
-    
     if crit_success:
-        critical_success.emit(metadata)
+        # critical_success.emit(metadata)  # Removed signal
+        print("Critical Success: %s" % metadata)
     elif crit_fail:
-        critical_failure.emit(metadata)
+        # critical_failure.emit(metadata)  # Removed signal
+        print("Critical Failure: %s" % metadata)
 
 #-------------------------------------------------------------
 # History Management
@@ -211,21 +181,43 @@ func _check_critical(results: Array, total: int, metadata: Dictionary) -> void:
 
 ## Maintains roll history FIFO buffer
 ## @private
-func _update_history(entry: Dictionary) -> void:
+static func _update_history(entry: Dictionary) -> void:
+    _history = get_static_history()
     _history.append(entry)
-    if _history.size() > max_history_size:
+    if _history.size() > get_max_history_size():
         _history.pop_front()
+    set_static_history(_history)
 
 ## Gets last roll for debugging
 ## @return: Last roll dictionary or empty
-func get_last_roll() -> Dictionary:
+static func get_last_roll() -> Dictionary:
+    _history = get_static_history()
     return _history.back() if !_history.is_empty() else {}
 
 ## Clears roll history
-func clear_history() -> void:
-    _history.clear()
+static func clear_history() -> void:
+    set_static_history([])
 
 ## Gets full roll history copy
 ## @return: Array of roll dictionaries
-func get_history() -> Array:
-    return _history.duplicate()
+static func get_history() -> Array:
+    return get_static_history().duplicate()
+
+## Static getter for _history
+static func get_static_history() -> Array:
+    _history = ProjectSettings.get_setting("DiceRoller/history")
+    if not _history:
+        _history = []
+    return _history
+
+## Static setter for _history
+static func set_static_history(history: Array) -> void:
+    ProjectSettings.set_setting("DiceRoller/history", history)
+
+## Static getter for enable_history
+static func get_enable_history() -> bool:
+    return ProjectSettings.get_setting("DiceRoller/enable_history", true)
+
+## Static getter for max_history_size
+static func get_max_history_size() -> int:
+    return ProjectSettings.get_setting("DiceRoller/max_history_size", 20)

@@ -119,7 +119,7 @@ func _get_astar_id_from_world(world_pos: Vector3) -> int:
     return _get_astar_id(axial_coords.x, axial_coords.y)
 
 ## Finds path with unit-specific movement rules
-func find_unit_path(unit: Node3D, start: Vector3, end: Vector3) -> Array[Vector3]:
+func find_unit_path(unit: Node3D, start: Vector3, end: Vector3) -> Array[HexCell]:
     var start_id = _get_astar_id_from_world(start)
     var end_id = _get_astar_id_from_world(end)
     
@@ -242,6 +242,14 @@ func round_axial(q: float, r: float) -> Vector3:
         rz = -rx - ry
         
     return Vector3(rx, ry, rz)
+
+static  func get_hex_distance(start_hex: Vector2i, end_hex: Vector2i) -> float:
+    var q1 = start_hex.x
+    var r1 = start_hex.y
+    var q2 = end_hex.x
+    var r2 = end_hex.y
+    return float((abs(q1 - q2) + abs(r1 - r2) + abs(q1 + r1 - q2 - r2)) / 2)
+
 #endregion
 #region Grid Query
 ## Retrieves cell at specified axial coordinates
