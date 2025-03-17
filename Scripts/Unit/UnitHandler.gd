@@ -31,7 +31,7 @@ func _ready():
 ## Public method to damage specific section
 ## @param section_name: String - Name of section to damage
 ## @param damage: float - Amount of damage to apply
-func apply_damage(section_name: String, damage: float) -> void:
+func apply_damage(section_name: String, damage: float, critical: bool) -> void:
     var handler = _get_section_handler(section_name)
     if not handler:
         push_warning("UnitHandler: Section '%s' not found" % section_name)
@@ -64,21 +64,22 @@ func _get_section_handler(section_name: String) -> SectionHandler:
     return section_handlers.get(section_name, null)
 
 # Handle section destruction event
-func _on_section_destroyed() -> void:
-    if _check_critical_destruction():
+func _on_section_destroyed(_section : SectionHandler) -> void:
+    #if _check_critical_destruction():
+    if _section.section_data.critical == true :
         unit_destroyed.emit()
         queue_free()
 
 # Check if all critical sections are destroyed
-func _check_critical_destruction() -> bool:
-    for section_name in unit_data.critical_sections:
-        var handler = _get_section_handler(section_name)
-        if not handler:
-            push_error("UnitHandler: Critical section '%s' not found" % section_name)
-            return false
-        if handler.current_structure > 0:
-            return false
-    return true
+#func _check_critical_destruction() -> bool:
+#    for section_name in unit_data.critical_sections:
+#        var handler = _get_section_handler(section_name)
+#        if not handler:
+#            push_error("UnitHandler: Critical section '%s' not found" % section_name)
+#            return false
+#        if handler.current_structure > 0:
+#            return false
+#    return true
 
 # Monitor for overheating conditions
 func _check_overheat() -> void:

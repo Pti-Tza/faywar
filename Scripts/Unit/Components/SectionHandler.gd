@@ -8,12 +8,10 @@ signal structure_damaged(amount: float, remaining: float)
 ## Emitted when section structure reaches zero
 signal section_destroyed
 
-## Reference to SectionData resource containing static properties
-@export var section_data: SectionData
-
-# Runtime state
-var current_armor: float      # Current armor points
-var current_structure: float  # Current structure points
+### Core Properties ###
+var section_data: SectionData
+var current_armor: float = 0.0
+var current_structure: float = 0.0
 var component_handlers: Array[ComponentHandler] = []  # Child components
 
 # Initialize section state when added to scene tree
@@ -23,29 +21,24 @@ func _ready():
     _initialize_components()
 
 ## Main damage entry point for the section
-## @param base_damage: float - Raw damage before armor reduction
-func apply_damage(base_damage: float) -> void:
-    # First apply damage to armor
-    var armor_damage = min(base_damage, current_armor)
-    current_armor -= armor_damage
-    armor_damaged.emit(armor_damage, current_armor)
-    
-    # Calculate remaining damage to apply to structure
-    var remaining_damage = base_damage - armor_damage
-    if remaining_damage > 0:
-        _apply_structure_damage(remaining_damage)
-
-# Handles damage to internal structure
-func _apply_structure_damage(damage: float) -> void:
-    var structure_damage = min(damage, current_structure)
-    current_structure -= structure_damage
-    structure_damaged.emit(structure_damage, current_structure)
-    
-    if current_structure <= 0:
-        section_destroyed.emit()
+## @param damage: float - Raw damage before armor reduction
+### Damage Handling ###
+func apply_damage(damage: float) -> void:
+    # Reduce structure if armor is depleted
+    if current_armor > 0:
+        current_armor = max(current_armor - damage, 0.0)
+        armor_damaged.emit(damage, current_armor)
     else:
-        # Distribute residual damage to critical components
-        _distribute_component_damage(damage)
+        current_structure -= damage
+        structure_damaged.emit(damage, current_structure)
+        
+        # Check for destruction
+        if current_structure <= 0:
+            section_destroyed.emit(section_data.section_name)
+
+func _on_section_destroyed(section_name: String) -> void:
+    # Optional: Handle section-specific effects (e.g., explosion)
+    emit_signal("section_destroyed", section_name)
 
 # Creates component handlers from section data
 func _initialize_components() -> void:

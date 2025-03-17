@@ -16,16 +16,13 @@ enum WeaponType {
 @export_range(0, 100) var base_accuracy: float = 0.7  # 70% base hit chance
 @export var cooldown_time: float = 3.0  # Seconds between shots
 @export var effective_range: Vector2 = Vector2(100, 500)  # Min/max optimal range
+@export var projectile_per_attack : int = 1
 
 @export_category("Ammunition")
 @export var uses_ammo: bool = false
 @export var max_ammo: int = 10
 @export var current_ammo: int = 10
 
-@export_category("Missile Properties")
-@export var missile_count: int = 4  # For LRM/SRM systems
-@export var missile_spread: float = 50.0  # Spread radius in pixels
-@export var damage_per_missile: float = 2.0
 
 @export_category("Visuals")
 @export var projectile_scene: PackedScene

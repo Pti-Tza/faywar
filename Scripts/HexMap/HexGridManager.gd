@@ -243,7 +243,7 @@ func round_axial(q: float, r: float) -> Vector3:
         
     return Vector3(rx, ry, rz)
 
-static  func get_hex_distance(start_hex: Vector2i, end_hex: Vector2i) -> float:
+func get_hex_distance(start_hex: Vector2i, end_hex: Vector2i) -> float:
     var q1 = start_hex.x
     var r1 = start_hex.y
     var q2 = end_hex.x
