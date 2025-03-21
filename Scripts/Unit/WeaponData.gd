@@ -2,29 +2,30 @@
 extends ComponentData
 class_name WeaponData
 
-enum WeaponType {
-    BALLISTIC,
-    ENERGY,
-    MISSILE
-}
+enum AttackPattern { SINGLE, CLUSTER, CONCENTRATED }
+enum WeaponType { BALLISTIC, ENERGY, MISSILE, ARTILLERY }
 
-@export_category("Base Properties")
 
+@export_category("Core Properties")
+@export var weapon_name: String = "Unnamed Weapon"
 @export var weapon_type: WeaponType = WeaponType.BALLISTIC
-@export var damage: float = 10.0
-@export var heat_generation: float = 4.0
-@export_range(0, 100) var base_accuracy: float = 0.7  # 70% base hit chance
-@export var cooldown_time: float = 3.0  # Seconds between shots
-@export var effective_range: Vector2 = Vector2(100, 500)  # Min/max optimal range
-@export var projectile_per_attack : int = 1
+@export var attack_pattern: AttackPattern = AttackPattern.SINGLE
+@export var damage: float = 5.0
+@export var heat_generation: float = 2.0
+
+@export_category("Cluster Weapons")
+@export var cluster_size: int = 1
+@export var cluster_spread: float = 0.0
+@export var cluster_table: Array[int] = []
 
 @export_category("Ammunition")
 @export var uses_ammo: bool = false
-@export var max_ammo: int = 10
-@export var current_ammo: int = 10
+@export var max_ammo: int = 0
+@export var ammo_explosion_risk: float = 0.1
 
-
-@export_category("Visuals")
-@export var projectile_scene: PackedScene
-@export var fire_sound: AudioStream
-#@export var fire_effect: GPUParticles2D
+@export_category("Advanced")
+@export var critical_hit_bonus: float = 0.1
+@export var minimum_range: int = 0
+@export var optimal_range: int = 10
+@export var maximum_range: int = 20
+@export var projectile_per_attack : int = 1

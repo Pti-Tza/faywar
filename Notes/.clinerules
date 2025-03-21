@@ -1,0 +1,22 @@
+# Project Intelligence
+
+[Component Naming]
+- Use _handler suffix for runtime components
+- _data suffix for resource definitions
+
+[Signal Convention]
+- Past tense for completed actions
+- Present tense for state changes
+
+[Damage Propagation]
+1. AttackSystem -> UnitHandler
+2. UnitHandler -> SectionHandler
+3. SectionHandler -> ComponentHandler
+
+[AI Priorities]
+- Berserker: Always closes distance
+- Sniper: Prefers elevation advantage
+
+[Testing Rules]
+- Validate all 2D6 rolls against histogram
+- Test movement costs at max grid range

@@ -5,6 +5,9 @@ class_name BattleController
 ##
 ## Handles unit turns, victory conditions, and combat system coordination.
 ## Orchestrates interaction between game systems during active missions.
+## Mission Completion or failure is triggered by MissionEvent 
+
+
 
 #region Signals
 ## Emitted when combat sequence begins
@@ -28,17 +31,15 @@ signal defeat_occurred
 @export var unit_loader: UnitManager
 @export var movement_system: MovementSystem
 @export var attack_system: AttackSystem
-
+@export var mission_director: MissionDirector
 
 @export_category("Combat Rules")
 ## Maximum number of rounds before automatic timeout
 @export var max_turns: int = 20
-## List of conditions required for mission victory
-@export var victory_conditions: Array[ConditionResource]
 ## AI Controller class
-@export var ai_controller_class: Class = preload("res://Scripts/Turn/AIController.gd")
+@export var ai_controller_class: AIController
 ## Player Controller class
-@export var player_controller_class: Class = preload("res://Scripts/Turn/PlayerController.gd")
+@export var player_controller_class: PlayerController
 #endregion
 
 #region Private Variables
@@ -51,7 +52,6 @@ var _controllers: Dictionary = {}     # {unit_uuid: controller}
 #region Turn Handle
 func _ready() -> void:
     initiative_system.initialize(initiative_data)
-    BattleController.combat_started.connect(_on_combat_start)
 
 func start_combat_round() -> void:
     initiative_system.reset_round()
@@ -85,7 +85,6 @@ func exit_state() -> Dictionary:
     
     # Store combat results
     transition_data["combat_log"] = _combat_log.duplicate()
-    transition_data["victory_state"] = _get_victory_state()
     
     if unit_loader:
         transition_data["remaining_units"] = unit_loader.get_survivors()
@@ -103,11 +102,6 @@ func exit_state() -> Dictionary:
     
     return transition_data
 
-## Determine final battle outcome
-func _get_victory_state() -> int:
-    if _mission_director.is_mission_completed():
-        return 1
-    return 0
 
 ## Get unique identifier for this state
 ## @return: String constant representing battle state
@@ -146,12 +140,9 @@ func _spawn_units(context: Dictionary) -> void:
 
 ## Initialize mission director
 func _initialize_mission_director() -> void:
-    _mission_director = MissionDirector.new()
-    _mission_director.scenario = mission_scenario
-    add_child(_mission_director)
-    _mission_director.initialize_mission(unit_loader)
-    _mission_director.mission_completed.connect(_on_mission_completed)
-    _mission_director.mission_failed.connect(_on_mission_failed)
+    mission_director.initialize_mission(unit_loader)
+    mission_director.mission_completed.connect(_on_mission_completed)
+    mission_director.mission_failed.connect(_on_mission_failed)
 
 ## Begin combat sequence and initialize turn order
 func _start_combat_sequence() -> void:
@@ -202,11 +193,6 @@ func _end_combat_round() -> void:
         # Start next round
         _process_next_unit()
 
-## Evaluate victory conditions
-## @return: True if all victory conditions are satisfied
-func _check_victory() -> bool:
-    return victory_conditions.all(func(cond): return cond.is_met())
-
 func _handle_timeout() -> void:
     push_warning("Combat timed out after %d turns." % max_turns)
     defeat_occurred.emit()
@@ -221,12 +207,12 @@ func _on_unit_turn_ended(controller: BaseController):
 
 ## Handle mission completion
 func _on_mission_completed(victory_type: String) -> void:
-    push_info("Mission completed with victory type: %s" % victory_type)
+    print("Mission completed with victory type: %s" % victory_type)
     victory_achieved.emit()
 
 ## Handle mission failure
 func _on_mission_failed(reason: String) -> void:
-    push_info("Mission failed due to: %s" % reason)
+    print("Mission failed due to: %s" % reason)
     defeat_occurred.emit()
 
 ## Cleanup controllers at the end of combat

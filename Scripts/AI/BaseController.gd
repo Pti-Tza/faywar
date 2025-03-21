@@ -7,7 +7,8 @@ BaseController is an abstract class for managing unit turns.
 It provides a framework for both AI and player controllers.
 Subclasses must implement the `begin_turn`, `process_turn`, and `end_turn` methods.
 '''
-
+@export var hex_grid : HexGridManager
+@export var attack_system : AttackSystem
 ### Signals ###
 signal turn_started(controller: BaseController)
     # Emitted when the turn starts
@@ -20,11 +21,11 @@ signal action_selected(action: String)
 # None required for base controller
 
 ### Internal State ###
-var _current_unit: Node = null
+var _current_unit: UnitHandler
     # Reference to the unit currently controlled
 
 ### Public API ###
-func begin_turn(unit: Node) -> void:
+func begin_turn(unit: UnitHandler) -> void:
     '''
     @brief Begins the turn for the specified unit
     @param unit: Node - The unit to control

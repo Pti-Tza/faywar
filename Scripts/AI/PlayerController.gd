@@ -19,12 +19,7 @@ func begin_turn(unit: Node) -> void:
     @brief Begins the turn for the player-controlled unit
     @param unit: Node - The unit to control
     '''
-    super.begin_turn(unit)
-    assert(UnitManager != null, "UnitManager reference is missing")
-    assert(ActionMenu != null, "ActionMenu reference is missing")
     
-    UnitManager.select_unit(unit)
-    ActionMenu.enable()
 
 func process_turn(delta: float) -> void:
     '''
