@@ -1,8 +1,8 @@
 # initiative_system.gd
 class_name InitiativeSystem
-extends InitiativeManager
+extends Node
 ## Speed-based initiative implementation with tiebreaker support
-
+static var instance: InitiativeSystem
 ## Current initiative order
 var _turn_order: Array[UnitHandler] = []
 ## Configuration resource
@@ -12,12 +12,18 @@ var _rng: RandomNumberGenerator
 ## Deferred prediction update timer
 var _prediction_timer: Timer
 
+signal round_reset
+signal unit_added
+signal unit_removed(unit: UnitHandler)
+signal turn_order_updated(_turn_order: Array[UnitHandler])
+
 func _init():
     _prediction_timer = Timer.new()
     _prediction_timer.wait_time = 0.2
     _prediction_timer.one_shot = true
     _prediction_timer.timeout.connect(_emit_updated_order)
     add_child(_prediction_timer)
+    instance = self
 
 func initialize(data: InitiativeData) -> void:
     _config = data

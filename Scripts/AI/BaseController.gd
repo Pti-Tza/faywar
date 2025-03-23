@@ -24,6 +24,18 @@ signal action_selected(action: String)
 var _current_unit: UnitHandler
     # Reference to the unit currently controlled
 
+# Team aligment
+var team_index: int = 0
+
+func is_ally(other_controller: BaseController) -> bool:
+    return TeamManager.instance.are_allies(team_index, other_controller.team_index)
+
+func is_enemy(other_controller: BaseController) -> bool:
+    return TeamManager.instance.are_enemies(team_index, other_controller.team_index)
+
+func get_hostile_teams() -> Array[int]:
+    return TeamManager.instance.get_hostile_teams(team_index)
+
 ### Public API ###
 func begin_turn(unit: UnitHandler) -> void:
     '''

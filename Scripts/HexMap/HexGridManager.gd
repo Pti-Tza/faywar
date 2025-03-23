@@ -10,11 +10,13 @@ class_name HexGridManager
 ## - Asymmetric terrain costs
 
 #region Configuration
+static var instance: HexGridManager
+
 @export_category("Grid Configuration")
 ## Number of concentric rings around center (0 = single hex)
 @export var grid_radius: int = 10
 ## Size of individual hexes (X: width, Y: height)
-@export var hex_size: Vector2 = Vector2(2, 2)
+@export var hex_size: Vector2 = Vector2(10, 10)
 ## Vertical height per elevation level
 @export var elevation_step: float = 1.0
 
@@ -23,6 +25,10 @@ class_name HexGridManager
 @export var terrain_data: TerrainData
 ## Reference to custom A* implementation
 var astar: DirectionalAStar
+
+func _init():
+    instance = self
+
 #endregion
 
 #region Internal State

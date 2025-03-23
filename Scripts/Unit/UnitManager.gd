@@ -5,11 +5,11 @@
 extends Node
 class_name UnitManager
 
+static var instance : UnitManager
 ### Signals ###
 signal unit_spawned(unit: Node, position: Vector3)  # Unit created and placed
 signal unit_destroyed(unit: Node, wreckage: Node)    # Unit destroyed + wreck ref
 signal unit_damaged(unit: Node, section: String, damage: int)  # Location-based damage
-signal unit_overheated(unit: Node, shutdown: bool)   # Heat status change
 
 ### Properties ###
 var active_units: Array = []              # All operational units
@@ -20,8 +20,8 @@ var unit_registry: Dictionary = {}        # { uuid: { node, profile, team } }
 @export var default_wreckage_scene: PackedScene  # Fallback wreckage
 
 ### Dependencies ###
-@onready var hex_grid = $HexGridManager    # Spatial tracking
-@onready var turn_manager = $TurnManager   # Turn sequencing
+@onready var hex_grid : HexGridManager    # Spatial tracking
+
 
 enum MobilityType {
     BIPEDAL,    # Humanoid mechs/units
@@ -30,17 +30,20 @@ enum MobilityType {
     TRACKED,    # Tank-like units
     AERIAL      # Flying units (limited)
 }
+
+func _init():
+    instance = self
 # --------------------------
 #region Public API
 # --------------------------
 
 ## Spawns a unit using BattleTech unit profile data
-## @param profile: UnitProfile - Contains stats/configuration
+## @param profile: UnitData - Contains stats/configuration
 ## @param spawn_hex: Vector3i - Initial grid position
 ## @param team: int - Controlling faction/player
-func spawn_unit(profile: UnitProfile, spawn_hex: Vector3i, team: int = -1, id: String = _generate_unit_id(profile)) -> Node:
+func spawn_unit(profile: UnitData, spawn_hex: Vector3i, team: int = -1, id: String = _generate_unit_id(profile)) -> Node:
     # Validate critical profile data
-    assert(profile != null, "UnitProfile cannot be null")
+    assert(profile != null, "UnitData cannot be null")
     assert(profile.unit_scene != null, "Missing unit scene in profile")
     
     # Instantiate and configure unit
@@ -59,16 +62,17 @@ func spawn_unit(profile: UnitProfile, spawn_hex: Vector3i, team: int = -1, id: S
     
     # Connect BattleTech-critical signals
     unit.component_damaged.connect(_on_component_damaged.bind(unit))
-    unit.heat_critical.connect(_on_heat_critical.bind(unit))
+    # Heat not implemented
+    #unit.heat_critical.connect(_on_heat_critical.bind(unit))
     unit.destroyed.connect(_on_unit_destroyed.bind(unit))
     
     # Set initial battlefield position
-    hex_grid.place_unit(unit, spawn_hex)
+    hex_grid.place_unit(unit, spawn_hex.x, spawn_hex.y)
     
     emit_signal("unit_spawned", unit, spawn_hex)
     return unit
 
-func _generate_unit_id(profile: UnitProfile) -> String:
+func _generate_unit_id(profile: UnitData) -> String:
     # Generate a unique unit ID based on profile and timestamp
     return "%s_%d" % [profile.profile_id, Time.get_time_dict_from_system()]
 
@@ -104,16 +108,6 @@ func _on_component_damaged(section: String, damage: int, unit: Node) -> void:
     if unit.component_system.is_section_destroyed(section):
         _handle_section_destruction(unit, section)
 
-
-## Processes heat-related critical events
-## @param shutdown: bool - Whether unit shut down
-## @param unit: Node - Source unit
-func _on_heat_critical(shutdown: bool, unit: Node) -> void:
-    emit_signal("unit_overheated", unit, shutdown)
-    
-    if shutdown:
-        # BattleTech: Shutdown units can't take actions
-        turn_manager.remove_from_initiative(unit)
 
 
 ## Handles unit destruction events

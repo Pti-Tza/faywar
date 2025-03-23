@@ -2,6 +2,8 @@
 extends Node
 class_name MovementSystem
 
+
+static var instance : MovementSystem
 ### 
 # MovementSystem handles all unit movement mechanics
 # - Pathfinding using HexGridManager
@@ -29,6 +31,9 @@ var min_clearance_distance: float = 1.5 # Minimum distance to obstacles
 var _movement_paths: Dictionary = {} # {unit_uuid: [HexCell]}
 
 #--- Core Methods ---
+func _init():
+    instance=self
+
 
 ### 
 # Initialize dependencies and connect signals
@@ -115,25 +120,34 @@ func finalize_movement(unit: UnitHandler) -> void:
 # Get available movement hexes for unit
 # @param unit: Unit to check
 # @return: Array[HexCell] - Valid destination hexes
+# MovementSystem.gd - Dijkstra's Implementation
 func get_available_hexes(unit: UnitHandler) -> Array[HexCell]:
-    var origin = unit.current_hex
-    var _max_range = unit.stats.movement_range
+    var costs = {}
+    var pq = PriorityQueue.new()
+    var start_pos = unit.grid_position
     
-    var visited: Dictionary = {}  # Use Dictionary to mimic Set behavior
-    var queue = [origin]
-    var available_hexes: Array[HexCell] = []
+    # Initialize with unit's current position
+    pq.push(start_pos, 0.0)
+    costs[start_pos] = 0.0
     
-    while queue.size() > 0:
-        var current = queue.pop_front()
-        visited.get_or_add(current)
+    while not pq.is_empty():
+        var current = pq.pop()
         
-        for neighbor in hex_grid.get_neighbors(current.x, current.y):
-            var cost = neighbor.get_movement_cost(unit.unit_data.mobility_type)
-            if cost <= unit.remaining_mp and not visited.has(neighbor.axial_coord):
-                queue.append(neighbor.axial_coord)
-                available_hexes.append(neighbor)
+        # Split coordinates for neighbor lookup
+        var q = current.x
+        var r = current.y
+        
+        for neighbor in hex_grid.get_neighbors(q, r):
+            var neighbor_pos = neighbor.axial_coord
+            var move_cost = neighbor.get_movement_cost(unit.mobility_type)
+            var total_cost = costs[current] + move_cost
+            
+            if total_cost <= unit.remaining_mp:
+                if total_cost < costs.get(neighbor_pos, INF):
+                    costs[neighbor_pos] = total_cost
+                    pq.push(neighbor_pos, total_cost)
     
-    return available_hexes
+    return costs.keys().map(func(pos): return hex_grid.get_cell(pos.x, pos.y))
 ###
 ### 
 # Calculate elevation change cost between hexes

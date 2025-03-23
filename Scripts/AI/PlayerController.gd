@@ -1,30 +1,29 @@
 extends BaseController
 class_name PlayerController
 
-### Class-level documentation ###
-'''
-PlayerController manages player-controlled units during their turn.
-It selects the unit and enables the action menu for player input.
-'''
+signal action_move_requested(unit: UnitHandler)
+signal action_attack_requested(unit: UnitHandler, target: UnitHandler, weapon: WeaponData)
 
-### Exported Properties ###
-# None required for player controller
+var current_unit: UnitHandler = null
 
-### Internal State ###
-# Inherits _current_unit from BaseController
+func _ready() -> void:
+    UnitManager.instance.unit_selected.connect(_on_unit_selected)
 
-### Public API ###
-func begin_turn(unit: Node) -> void:
-    '''
-    @brief Begins the turn for the player-controlled unit
-    @param unit: Node - The unit to control
-    '''
-    
+func begin_turn(unit: UnitHandler) -> void:
+    current_unit = unit
+    action_move_requested.emit(unit)
 
-func process_turn(delta: float) -> void:
-    '''
-    @brief Processes the player's turn logic
-    @param delta: float - Time elapsed since the last frame
-    @note Input handling is managed by the player logic
-    '''
-    pass
+func _on_unit_selected(unit: UnitHandler) -> void:
+    if unit.controller.team_index == 0:
+        current_unit = unit
+        action_move_requested.emit(unit)
+
+func execute_move(path: Array) -> void:
+    if MovementSystem.instance.validate_move(current_unit, path):
+        MovementSystem.instance.execute_move(current_unit, path)
+        action_move_requested.emit(current_unit)
+
+func execute_attack(target: UnitHandler, weapon: WeaponData) -> void:
+    if AttackSystem.instance.validate_attack(current_unit, target, weapon):
+        AttackSystem.instance.resolve_attack(current_unit, target, weapon)
+        action_attack_requested.emit(current_unit, target, weapon)

@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://e2yorlyb0xqi"]
+
+[ext_resource type="Shader" uid="uid://bo7jrvrv7nx5a" path="res://Shaders/hex_highlight.gdshader" id="1_qcsj4"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_qcsj4")
+shader_parameter/border_sharpness = 0.95
+shader_parameter/height = 0.95
+shader_parameter/color = Color(1, 0.461615, 0.530186, 0.545098)

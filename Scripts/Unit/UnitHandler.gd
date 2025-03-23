@@ -91,3 +91,9 @@ func _trigger_shutdown() -> void:
     # Apply emergency damage to all sections
     for handler in section_handlers.values():
         handler.apply_damage(5.0) # Constant emergency damage value
+
+func get_total_armor() -> int:
+    return section_handlers.values().reduce(func(acc, s): return acc + s.current_armor, 0)
+
+func get_total_structure() -> int:
+    return section_handlers.values().reduce(func(acc, s): return acc + s.current_structure, 0)        

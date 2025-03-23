@@ -1,7 +1,8 @@
 # AttackSystem.gd
 extends Node
-
 class_name AttackSystem
+
+static var instance: AttackSystem
 
 signal attack_resolved(attacker: UnitHandler, target: UnitHandler, result: AttackResult)
 
@@ -17,18 +18,8 @@ const SIDE_ANGLE = 60  # Degrees for side arc determination
 const CRITICAL_DMG_MULTIPLIER = 2.0
 
 ### INITIALIZATION ###
-func _init(
-    attacker: UnitHandler,
-    target: UnitHandler,
-    weapon_data: WeaponData,
-    hex_grid: HexGridManager,
-    line_of_sight: LineOfSight
-):
-    self.attacker = attacker
-    self.target = target
-    self.weapon_data = weapon_data
-    self.hex_grid = hex_grid
-    self.line_of_sight = line_of_sight
+func _init() :
+ instance= self
 
 func _ready():
     assert(hex_grid != null, "HexGridManager must be assigned")
