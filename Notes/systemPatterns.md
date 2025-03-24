@@ -1,7 +1,7 @@
 ## Architectural Overview
 
-```mermaid
-flowchart TD
+ ```mermaid
+    flowchart TD
     BattleController --> InitiativeSystem
     BattleController --> HexGridManager
     BattleController --> UnitManager
@@ -23,7 +23,7 @@ flowchart TD
     ClusterAttackHandler --> MultiHit[Multiple Locations]
  
 
-# Damage Propagation Path
+## Damage Propagation Path
 ```mermaid
 sequenceDiagram
     Attacker->>AttackSystem: resolve_attack()
@@ -32,3 +32,64 @@ sequenceDiagram
     UnitHandler->>SectionHandler: apply_damage()
     SectionHandler->>ComponentHandler: check_destroyed()
     ComponentHandler-->>AttackSystem: result     
+
+
+
+## Battle Architecture
+
+ flowchart TD
+    BC[BattleController] -->|Manages| MS[MovementSystem]
+    BC -->|Manages| AS[AttackSystem]
+    
+    PC[PlayerController] -->|Emits Actions| BC
+    AI[AIController] -->|Emits Actions| BC
+    
+    BC -->|Executes Via| MS
+    BC -->|Executes Via| AS
+
+    style BC fill:#f9f,stroke:#333
+    style PC fill:#ccf,stroke:#333
+    style AI fill:#cfc,stroke:#333
+    style MS fill:#fdd,stroke:#333
+    style AS fill:#dfd,stroke:#333
+
+Key Architectural Rules:
+
+BattleController is Sole System Operator
+
+Only BattleController should directly call MovementSystem/AttackSystem methods
+
+Maintains turn state validation
+
+Handles action sequencing
+
+Controllers are Decision Makers
+
+gdscript
+Copy
+# PlayerController.gd
+func execute_move(path: Array[HexCell]):
+    action_selected.emit("move", {"path": path})
+
+# BasicAIController.gd 
+func calculate_and_emit_move():
+    var path = find_best_path()
+    action_selected.emit("move", {"path": path})
+BattleController Action Handling
+
+gdscript
+Copy
+# BattleController.gd
+func _on_controller_action(action: String, details: Dictionary):
+    if not _validate_action_ownership(sender):
+        return
+    
+    match action:
+        "move": _execute_validated_move(details)
+        "attack": _execute_validated_attack(details)
+
+func _execute_validated_move(details):
+    if movement_system.validate(_active_unit, details.path):
+        movement_system.execute(_active_unit, details.path)
+    else:
+        handle_invalid_action()   

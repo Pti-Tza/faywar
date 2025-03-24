@@ -183,6 +183,10 @@ func _start_unit_turn(unit: UnitHandler) -> void:
     var controller = controller_class.new()
     controller.begin_turn(unit)
     
+    # Connect signals
+    controller.turn_ended.connect(_on_unit_turn_ended)
+    controller.action_selected.connect(_on_controller_action)
+
     # Store controller in dictionary
     _controllers[unit.uuid] = controller
     
@@ -212,6 +216,42 @@ func _on_unit_turn_ended(controller: BaseController):
         controller.disconnect("turn_ended", _on_unit_turn_ended)
     # Progress to next unit
     _process_next_unit()
+
+
+
+
+func _on_controller_action(action_type: String, details: Dictionary) -> void:
+    match action_type:
+        "move":
+            _handle_move_action(details)
+        "attack":
+            _handle_attack_action(details)
+        "ability":
+            _handle_ability_action(details)
+        _:
+            push_error("Unknown action type: ", action_type)
+
+func _handle_move_action(details: Dictionary) -> void:
+    if movement_system.validate_move(_active_unit, details.path):
+        movement_system.execute_move(_active_unit, details.path)
+        emit_signal("movement_executed", _active_unit, details.path)
+    else:
+        push_warning("Invalid move path for ", _active_unit.unit_data.name)
+
+func _handle_attack_action(details: Dictionary) -> void:
+    var target = details.target
+    var weapon = details.weapon
+    if attack_system.validate_attack(_active_unit, target, weapon):
+        attack_system.resolve_attack(_active_unit, target, weapon)
+    else:
+        push_warning("Invalid attack from ", _active_unit.unit_data.name)
+
+func _handle_ability_action(details: Dictionary) -> void:
+    # Implement ability-specific logic
+    pass
+
+
+
 
 ## Handle mission completion
 func _on_mission_completed(victory_type: String) -> void:

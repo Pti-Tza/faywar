@@ -8,6 +8,21 @@
     instance=self
     )
 - Don't couple UI Logic and Game Logic
+
+- BattleController is Sole System Operator
+
+    1. Only BattleController should directly call MovementSystem/AttackSystem methods
+
+    2. Maintains turn state validation
+
+    3. Handles action sequencing
+
+    4. Controllers are Decision Makers
+
+- Use Mediator Pattern to handle decoupled UI and Game Logic
+
+
+
 [Component Naming]
 - Use _handler suffix for runtime components
 - _data suffix for resource definitions
@@ -28,3 +43,8 @@
 [Testing Rules]
 - Validate all 2D6 rolls against histogram
 - Test movement costs at max grid range
+
+[Action Handling]
+- All game actions in Combat scenes flow through BattleController 
+- Controllers only emit actions, never execute directly
+- Action validation happens in BattleController

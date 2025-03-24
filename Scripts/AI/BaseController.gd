@@ -14,7 +14,13 @@ signal turn_started(controller: BaseController)
     # Emitted when the turn starts
 signal turn_ended(controller: BaseController)
     # Emitted when the turn ends
-signal action_selected(action: String)
+signal action_selected(action_type: String, details: Dictionary)
+
+
+
+signal movement_intent(unit: UnitHandler)
+signal attack_intent(unit: UnitHandler)
+
     # Emitted when an action is selected
 
 ### Exported Properties ###

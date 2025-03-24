@@ -38,6 +38,20 @@ func _show_attack_result(attacker: UnitHandler, target: UnitHandler, weapon: Wea
         "combat"
     )
 
+func _on_player_movement_intent(unit: UnitHandler):
+    var reachable = MovementSystem.instance.get_available_hexes(unit)
+    HexGridHighlights.instance.update_movement_highlights(reachable)
+    _toggle_action_buttons(true)
+
+func _on_player_attack_intent(unit: UnitHandler):
+    var weapons = unit.get_available_weapons()
+    _show_weapon_selection(weapons)
+
+func _on_action_selected(action_type: String):
+    HexGridHighlights.clear_highlights()
+    _toggle_action_buttons(false)
+
+
 func _on_movement(unit: UnitHandler, path: Array) -> void:
     unit_status.update_display(unit)
     combat_log.add_entry("{unit} moved {distance}".format({
