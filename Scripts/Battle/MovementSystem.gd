@@ -15,9 +15,9 @@ static var instance : MovementSystem
 
 #--- Signals ---
 signal movement_started(unit: UnitHandler, path: Array[HexCell])
-signal movement_ended(unit: UnitHandler, success: bool)
+#signal movement_ended(unit: UnitHandler, success: bool)
 signal movement_blocked(unit: UnitHandler, reason: String)
-
+signal movement_executed(unit: UnitHandler, path: Array[HexCell])
 #--- Exported Properties ---
 @export_category("Dependencies")
 var hex_grid: HexGridManager
@@ -113,7 +113,7 @@ func finalize_movement(unit: UnitHandler) -> void:
         unit.current_hex = Vector2i(target_cell.q, target_cell.r)
     
     _movement_paths.erase(unit.uuid)
-    movement_ended.emit(unit, true)
+    movement_executed.emit(unit.uuid, path)
 ###
 
 ### 

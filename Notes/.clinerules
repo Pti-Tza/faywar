@@ -1,5 +1,13 @@
 # Project Intelligence
 
+[Patterns]
+- Don't use EventBus, use instances instead, example
+    (static var instance : BattleController
+    
+    func _init() -> void:
+    instance=self
+    )
+- Don't couple UI Logic and Game Logic
 [Component Naming]
 - Use _handler suffix for runtime components
 - _data suffix for resource definitions

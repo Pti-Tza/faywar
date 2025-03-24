@@ -7,7 +7,7 @@ class_name BattleController
 ## Orchestrates interaction between game systems during active missions.
 ## Mission Completion or failure is triggered by MissionEvent 
 
-
+static var instance : BattleController
 
 #region Signals
 ## Emitted when combat sequence begins
@@ -18,6 +18,10 @@ signal turn_phase_changed(phase: String)
 signal victory_achieved
 ## Emitted when defeat conditions are triggered
 signal defeat_occurred
+
+signal unit_selected(unit: UnitHandler)
+signal movement_executed(unit: UnitHandler, path: Array[HexCell])
+
 #endregion
 
 #region Exported Properties
@@ -48,6 +52,9 @@ var _active_unit: UnitHandler = null   # Unit currently taking action
 var _combat_log: Array[String] = []   # Record of significant combat events
 var _controllers: Dictionary = {}     # {unit_uuid: controller}
 #endregion
+
+func _init() -> void:
+    instance=self
 
 #region Turn Handle
 func _ready() -> void:
@@ -160,6 +167,7 @@ func _process_next_unit() -> void:
         _active_unit = initiative_system.get_next_unit()
         # Start unit's turn sequence
         _start_unit_turn(_active_unit)
+        emit_signal("unit_selected", _active_unit)
     else:
         # Handle end of combat round
         _end_combat_round()

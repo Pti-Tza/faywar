@@ -1,18 +1,27 @@
 # UI/BottomActionPanel.gd
 extends PanelContainer
+class_name BottomActionPanel
 
-@onready var core_actions := $Margin/HBox/CoreActions
-@onready var abilities := $Margin/HBox/Abilities
-@onready var system_commands := $Margin/HBox/SystemCommands
+## Custom signals
+signal movement_initiated(unit: UnitHandler)
+signal attack_initiated(unit: UnitHandler)
+
+#signal ability_used(ability: AbilityResource)
+
+
+@export var end_turn_btn : Button
+@export var core_actions : Node
+@export var abilities : Node
+@export var system_commands : Node
 
 # Preloaded resources
-@onready var action_button_scene = preload("res://UI/ActionButton.tscn")
+@export var action_button_scene : Node
 
 # Action configuration
-const CORE_ACTIONS = {
-    "move": {"text": "Move", "icon": "res://Assets/move_icon.png"},
-    "attack": {"text": "Attack", "icon": "res://Assets/attack_icon.png"},
-    "brace": {"text": "Brace", "icon": "res://Assets/brace_icon.png"}
+@export var CORE_ACTIONS = {
+    "move": {"text": "Move", "icon": "res://Assets/Textures/UI/move_icon.png"},
+    "attack": {"text": "Attack", "icon": "res://Assets/Textures/UI/attack_icon.png"},
+    "brace": {"text": "Brace", "icon": "res://Assets/Textures/UI/brace_icon.png"}
 }
 
 var current_unit: UnitHandler
@@ -22,15 +31,15 @@ func show_for_unit(unit: UnitHandler) -> void:
     visible = true
     _clear_actions()
     _populate_core_actions()
-    _populate_abilities()
-    _populate_system_commands()
+    #_populate_abilities()
+    #_populate_system_commands()
 
 func _clear_actions() -> void:
     for child in core_actions.get_children():
         child.queue_free()
     for child in abilities.get_children():
         child.queue_free()
-    for child in system_commands.get_children():
+    for child in get_children():
         child.queue_free()
 
 func _populate_core_actions() -> void:
@@ -44,29 +53,23 @@ func _populate_core_actions() -> void:
         btn.connect("pressed", Callable(self, "_on_core_action_selected").bind(action_key))
         core_actions.add_child(btn)
 
-func _populate_abilities() -> void:
-    if current_unit.abilities.is_empty():
-        var label = Label.new()
-        label.text = "No Abilities Available"
-        abilities.add_child(label)
-        return
-    
-    for ability in current_unit.abilities:
-        var btn = action_button_scene.instantiate()
-        btn.configure(
-            ability.display_name,
-            load(ability.icon_path),
-            ability.can_activate(current_unit)
-        )
-        btn.connect("pressed", Callable(self, "_on_ability_selected").bind(ability))
-        abilities.add_child(btn)
+#func _populate_abilities() -> void:
+#    if current_unit.abilities.is_empty():
+#        var label = Label.new()
+#        label.text = "No Abilities Available"
+#        return
+#    
+#        var btn = action_button_scene.instantiate()
+#        btn.configure(
+#            ability.display_name,
+#            load(ability.icon_path),
+#            ability.can_activate(current_unit)
+#        )
+#        btn.connect("pressed", Callable(self, "_on_ability_selected").bind(ability))
+#        abilities.add_child(btn)
 
-func _populate_system_commands() -> void:
-    var end_turn_btn = Button.new()
-    end_turn_btn.text = "End Turn"
-    end_turn_btn.icon = load("res://Assets/end_turn_icon.png")
-    end_turn_btn.connect("pressed", Callable(Events.emit_signal).bind("turn_end_requested"))
-    system_commands.add_child(end_turn_btn)
+#func _populate_system_commands() -> void:
+    
 
 func _is_action_available(action: String) -> bool:
     match action:
@@ -78,15 +81,16 @@ func _is_action_available(action: String) -> bool:
 func _on_core_action_selected(action: String) -> void:
     match action:
         "move":
-            Events.emit_signal("movement_initiated", current_unit)
-            hide()
+            HexGridHighlights.instance.show_movement_range(PlayerController.instance.current_unit)
+            PlayerController.instance.prepare_movement()
         "attack":
-            Events.emit_signal("attack_initiated", current_unit)
+            HexGridHighlights.instance.show_attack_range(PlayerController.instance.current_unit)
         "brace":
             current_unit.activate_brace()
+            PlayerController.instance.end_turn()
             hide()
-
-func _on_ability_selected(ability: AbilityResource) -> void:
-    ability.activate(current_unit)
-    Events.emit_signal("ability_used", ability)
-    hide()
+#abilities not implemented yet
+#func _on_ability_selected(ability: AbilityResource) -> void:
+#    ability.activate(current_unit)
+#    Events.emit_signal("ability_used", ability)
+#    hide()
