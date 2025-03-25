@@ -24,6 +24,7 @@ var _cell_materials: Dictionary = {}  # HexCell: {base: Material, blend: ShaderM
 var _terrain_material_cache: Dictionary = {}
 
 func _ready() -> void:
+	grid_manager = HexGridManager.instance
 	if !grid_manager:
 		push_error("TerrainVisualManager: Missing GridManager reference")
 		return

@@ -11,18 +11,18 @@ extends Node3D
 var axial_coords: Vector2i = Vector2i.ZERO
 
 func initialize(q2: int, r2: int) -> void:
-    axial_coords = Vector2i(q2, r2)
-    name = "HexCell(%d,%d)" % [q2, r2]
+	axial_coords = Vector2i(q2, r2)
+	name = "HexCell(%d,%d)" % [q2, r2]
 
 # Helper properties
 var q: int : get = get_q
 var r: int : get = get_r
 
 func get_q() -> int:
-    return axial_coords.x
+	return axial_coords.x
 
 func get_r() -> int:
-    return axial_coords.y
+	return axial_coords.y
 
 
 
@@ -31,18 +31,18 @@ var grid_manager: HexGridManager
 
 ## Reference to terrain configuration resource
 @export var terrain_data: TerrainData :
-    set(value):
-        terrain_data = value
-        update_visuals()
+	set(value):
+		terrain_data = value
+		update_visuals()
 
 ## Vertical elevation level (0 = ground level)
 @export var elevation: float = 0 :
-    set(value):
-        
-        # Update vertical position using height step
-        position.y = elevation 
-        # Notify systems of elevation change
-        elevation_changed.emit(elevation)
+	set(value):
+		
+		# Update vertical position using height step
+		position.y = elevation 
+		# Notify systems of elevation change
+		elevation_changed.emit(elevation)
 
 ## Axial coordinate system (q, r) with implicit s = -q-r
 ## Maintains cube coordinate constraint: q + r + s = 0
@@ -54,23 +54,23 @@ var world_position: Vector3
 
 ## Reference to occupying unit (null if empty)
 var unit: Node3D = null :
-    set(value):
-        unit = value
-        occupancy_changed.emit(unit)
+	set(value):
+		unit = value
+		occupancy_changed.emit(unit)
 
 ## Type of cover provided by this cell
 var cover: CoverType = CoverType.NONE :
-    set(value):
-        cover = value
-        cover_changed.emit(cover)
+	set(value):
+		cover = value
+		cover_changed.emit(cover)
 
 var mesh_instance: MeshInstance3D
 
 ## Cover type classification system
 enum CoverType {
-    NONE,   ## No cover benefits
-    LIGHT,  ## 25% damage reduction
-    HEAVY   ## 50% damage reduction
+	NONE,   ## No cover benefits
+	LIGHT,  ## 25% damage reduction
+	HEAVY   ## 50% damage reduction
 }
 
 ## Signal emitted when elevation changes
@@ -82,45 +82,46 @@ signal cover_changed(new_cover: CoverType)
 
 # Initialize with axial coordinates
 func _init(axial_q: int, axial_r: int) -> void:
-    assert(axial_q + axial_r <= grid_manager.grid_radius, "Invalid axial coordinates")
-    q = axial_q
-    r = axial_r
-    name = "HexCell(%d,%d)" % [q, r]
+	grid_manager = HexGridManager.instance
+	assert(axial_q + axial_r <= grid_manager.grid_radius, "Invalid axial coordinates")
+	q = axial_q
+	r = axial_r
+	name = "HexCell(%d,%d)" % [q, r]
 
 func _ready():
-    mesh_instance = $MeshInstance3D
-    update_visuals()
+	mesh_instance = $MeshInstance3D
+	update_visuals()
 ## Calculates movement cost for a unit type
 ## [br][param mobility_type]: Unit's movement capability type
 ## [br][returns]: Total movement cost as float
 func get_movement_cost(mobility_type: UnitData.MobilityType) -> float:
-    var base_cost = terrain_data.get_mobility_cost(mobility_type)
-    var elevation_cost = elevation * terrain_data.elevation_multiplier
-    return base_cost + elevation_cost
+	var base_cost = terrain_data.get_mobility_cost(mobility_type)
+	var elevation_cost = elevation * terrain_data.elevation_multiplier
+	return base_cost + elevation_cost
 
 ## Updates visual representation of the cell
 func update_visuals():
-    if !mesh_instance || !terrain_data:
-        return
-    
-    mesh_instance.mesh = terrain_data.mesh
-    mesh_instance.material_override = terrain_data.material
-    
-    # Elevation positioning
-    var base_position = mesh_instance.position
-    base_position.y = elevation
-    mesh_instance.position = base_position
+	if !mesh_instance || !terrain_data:
+		return
+	
+	mesh_instance.mesh = terrain_data.mesh
+	mesh_instance.material_override = terrain_data.material
+	
+	# Elevation positioning
+	var base_position = mesh_instance.position
+	base_position.y = elevation
+	mesh_instance.position = base_position
 
 func _apply_material_variation():
-    if terrain_data.material_variations.size() > 0:
-        var variation = terrain_data.material_variations[randi() % terrain_data.material_variations.size()]
-        mesh_instance.material_override = variation
-    else:
-        mesh_instance.material_override = terrain_data.base_material
+	if terrain_data.material_variations.size() > 0:
+		var variation = terrain_data.material_variations[randi() % terrain_data.material_variations.size()]
+		mesh_instance.material_override = variation
+	else:
+		mesh_instance.material_override = terrain_data.base_material
 
 ## Validates cube coordinate constraints
 func is_valid_axial() -> bool:
-    return axial_coord.x + axial_coord.y + axial_coord.z == 0
+	return axial_coord.x + axial_coord.y + axial_coord.z == 0
 
 ## Example usage:
 ## [codeblock]

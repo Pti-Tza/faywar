@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://cmcrvsew2ri22"]
+[gd_scene load_steps=13 format=3 uid="uid://cmcrvsew2ri22"]
 
 [ext_resource type="Script" uid="uid://cnv3e3qbn8n70" path="res://Scripts/HexMap/HexGridManager.gd" id="1_r0vin"]
 [ext_resource type="Script" uid="uid://o2qyhftgba4x" path="res://Scripts/HexMap/HexMapGenerator.gd" id="2_iupxn"]
@@ -7,11 +7,97 @@
 [ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="4_tufw7"]
 [ext_resource type="PackedScene" uid="uid://c6g70vehc44w4" path="res://Prefabs/Terrain/HexCell.tscn" id="7_kt0wj"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6bxl2"]
+albedo_color = Color(0.367702, 0.594652, 1, 1)
+
+[sub_resource type="Resource" id="Resource_1s0kv"]
+resource_name = "water"
+script = ExtResource("4_tufw7")
+name = "water"
+map_symbol = "T"
+foot_movement = 1
+wheeled_movement = 2
+tracked_movement = 3
+hover_movement = 1
+vtol_movement = 1
+defense_bonus = 0
+stealth_modifier = 0
+heat_modifier = 0
+blocks_los = false
+flammable = false
+crumble = false
+min_depth = 0
+max_depth = 0
+strategic_map_color = Color(0, 0, 0, 1)
+model = ExtResource("3_kt0wj")
+visual_material = SubResource("StandardMaterial3D_6bxl2")
+material_variations = Array[Material]([])
+armor_damage_mod = 1.0
+crit_chance_mod = 1.0
+metadata/_custom_type_script = "uid://dinqmy7x47n0"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kt0wj"]
+albedo_color = Color(0.184897, 0.302163, 0.160432, 1)
+
+[sub_resource type="Resource" id="Resource_tufw7"]
+resource_name = "forest"
+script = ExtResource("4_tufw7")
+name = "forest"
+map_symbol = "T"
+foot_movement = 1
+wheeled_movement = 2
+tracked_movement = 3
+hover_movement = 1
+vtol_movement = 1
+defense_bonus = 0
+stealth_modifier = 0
+heat_modifier = 0
+blocks_los = false
+flammable = false
+crumble = false
+min_depth = 0
+max_depth = 0
+strategic_map_color = Color(0, 0, 0, 1)
+model = ExtResource("3_kt0wj")
+visual_material = SubResource("StandardMaterial3D_kt0wj")
+material_variations = Array[Material]([])
+armor_damage_mod = 1.0
+crit_chance_mod = 1.0
+metadata/_custom_type_script = "uid://dinqmy7x47n0"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kf3ap"]
+albedo_color = Color(0.194349, 0.194349, 0.194349, 1)
+
+[sub_resource type="Resource" id="Resource_equ6m"]
+resource_name = "mountain"
+script = ExtResource("4_tufw7")
+name = "mountain"
+map_symbol = "T"
+foot_movement = 1
+wheeled_movement = 2
+tracked_movement = 3
+hover_movement = 1
+vtol_movement = 1
+defense_bonus = 0
+stealth_modifier = 0
+heat_modifier = 0
+blocks_los = false
+flammable = false
+crumble = false
+min_depth = 0
+max_depth = 0
+strategic_map_color = Color(0, 0, 0, 1)
+model = ExtResource("3_kt0wj")
+visual_material = SubResource("StandardMaterial3D_kf3ap")
+material_variations = Array[Material]([])
+armor_damage_mod = 1.0
+crit_chance_mod = 1.0
+metadata/_custom_type_script = "uid://dinqmy7x47n0"
+
 [node name="TestHexMap" type="Node3D"]
 
 [node name="HexGridManager" type="Node3D" parent="."]
 script = ExtResource("1_r0vin")
-terrain_data = ExtResource("2_yfq0g")
 hex_cell_scene = ExtResource("7_kt0wj")
 metadata/_custom_type_script = "uid://cnv3e3qbn8n70"
 
@@ -23,9 +109,8 @@ transform = Transform3D(0.549495, 0.441299, -0.709444, 0.33235, 0.663604, 0.6702
 
 [node name="HexMapGenerator" type="Node3D" parent="."]
 script = ExtResource("2_iupxn")
-terrain_types = Array[ExtResource("4_tufw7")]([ExtResource("2_yfq0g")])
+terrain_types = Array[ExtResource("4_tufw7")]([SubResource("Resource_1s0kv"), ExtResource("2_yfq0g"), SubResource("Resource_tufw7"), SubResource("Resource_equ6m")])
 generate_on_start = true
-metadata/_custom_type_script = "uid://o2qyhftgba4x"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = ExtResource("3_kt0wj")

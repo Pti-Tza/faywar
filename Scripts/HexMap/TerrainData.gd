@@ -1,104 +1,76 @@
 # TerrainData.gd
-class_name TerrainData
 extends Resource
-## Central repository for all terrain configuration and global movement rules
-##
-## Manages terrain type lookup, movement cost calculations, and global modifiers
+class_name TerrainData
 
-@export_category("Terrain Database")
-## Collection of all available terrain types
-@export var terrain_types: Array[TerrainType] = []
-## Default terrain when requested type isn't found
-@export var default_terrain: String = "plains"
+### Battletech Core Terrain Properties (TW p.52-58) ###
+@export_category("Identification")
+@export var name: String = "Terrain"
+@export var map_symbol: String = "T"  # Standard BT map notation
 
-@export_category("Global Modifiers")
-## Multiplier for elevation-based movement costs
-@export_range(0.0, 2.0) var elevation_cost_multiplier: float = 0.5
-## Cost multiplier for downhill movement
-@export_range(0.0, 1.0) var downhill_cost_multiplier: float = 0.8
+@export_category("Movement Costs")
+@export var foot_movement: int = 1      # Bipedal/infantry
+@export var wheeled_movement: int = 2   # Wheeled vehicles
+@export var tracked_movement: int = 3   # Tanks
+@export var hover_movement: int = 1     # Hover units
+@export var vtol_movement: int = 1      # VTOL aircraft
 
-@export_category("Mobility Costs")
-## Movement cost multipliers by unit type
-@export var mobility_costs: Dictionary = {
-    UnitData.MobilityType.BIPEDAL: 1.0,
-    UnitData.MobilityType.WHEELED: 1.5,
-    UnitData.MobilityType.HOVER: 0.8,
-    UnitData.MobilityType.TRACKED: 2.0,
-    UnitData.MobilityType.AERIAL: 0.5
-}
+@export_category("Combat Modifiers")
+@export var defense_bonus: int = 0      # To-hit penalty
+@export var stealth_modifier: int = 0    # Sensor/visual detection
+@export var heat_modifier: int = 0       # Heat generation per turn
 
-@export_category("Visuals")
-@export var mesh: Mesh
-@export var base_material: Material
+@export_category("Special Rules")
+@export var blocks_los: bool = false    # Line of sight blocking
+@export var flammable: bool = false     # Can catch fire
+@export var crumble: bool = false       # Can be destroyed
+@export var min_depth: int = 0          # For water features
+@export var max_depth: int = 0
+
+### Advanced Properties ###
+@export_category("Visual Presentation")
+@export var combat_map_texture: Material
+@export var strategic_map_color: Color
+@export var model: Mesh
+
+## Base material for this terrain type
+@export var visual_material: Material
+## Array of material variations for visual diversity
 @export var material_variations: Array[Material]
+## Particle effect for environmental interactions
+#@export var footstep_effect: GPUParticles3D
 
-# Cache for quick terrain lookups (ID: TerrainType)
-var _terrain_cache: Dictionary = {}
+@export_category("Audio Properties")
+## Footstep sound for standard movement
+@export var footstep_audio: AudioStream
+## Special movement sound (e.g., water splashing)
+@export var special_move_audio: AudioStream
 
-func _init() -> void:
-    _build_terrain_cache()
 
-## Build lookup cache and validate terrain data
-func _build_terrain_cache() -> void:
-    _terrain_cache.clear()
-    var ids = []
-    
-    for terrain in terrain_types:
-        # Ensure unique IDs
-        assert(!ids.has(terrain.id), "Duplicate terrain ID: %s" % terrain.id)
-        ids.append(terrain.id)
-        
-        # Store in cache
-        _terrain_cache[terrain.id] = terrain
-        
-        # Validate terrain properties
-        terrain._validate_properties()
 
-## Retrieve terrain type by ID with fallback
-## [param terrain_id]: ID to look up
-## [returns]: TerrainType resource or default
-func get_terrain(terrain_id: String) -> TerrainType:
-    var id = terrain_id.to_lower().strip_edges()
-    return _terrain_cache.get(id, _terrain_cache[default_terrain])
+@export_category("Damage Rules")
+@export var armor_damage_mod: float = 1.0  # Damage multiplier
+@export var crit_chance_mod: float = 1.0   # Critical hit modifier
 
-## Calculate total movement cost for a unit type
-## [param mobility_type]: Unit's movement capability
-## [param terrain_id]: Current terrain ID
-## [param elevation_diff]: Height difference from previous position
-## [returns]: Total movement cost as float
-func calculate_movement_cost(
-    mobility_type: UnitData.MobilityType,
-    terrain_id: String,
-    elevation_diff: float = 0.0
-) -> float:
-    var terrain = get_terrain(terrain_id)
-    var base_cost = terrain.movement_cost * mobility_costs.get(mobility_type, 999.9)
-    
-    # Calculate elevation impact
-    if elevation_diff > 0:
-        base_cost += elevation_diff * elevation_cost_multiplier
-    else:
-        base_cost += abs(elevation_diff) * elevation_cost_multiplier * downhill_cost_multiplier
-    
-    return max(base_cost, 0.1)
+# Battletech-standard movement cost accessor
+func get_movement_cost(mobility_type: UnitData.MobilityType) -> int:
+    match mobility_type:
+        UnitData.MobilityType.BIPEDAL: return foot_movement
+        UnitData.MobilityType.WHEELED: return wheeled_movement
+        UnitData.MobilityType.TRACKED: return tracked_movement
+        UnitData.MobilityType.HOVER: return hover_movement
+        UnitData.MobilityType.AERIAL: return vtol_movement
+        _: return 999
 
-## Get defense bonus for terrain type
-## [param terrain_id]: ID to check
-## [returns]: Defense bonus percentage (0-100)
-func get_defense_bonus(terrain_id: String) -> int:
-    return get_terrain(terrain_id).defense_bonus
+# Official BT terrain validation (TO p.315)
+func is_valid_combination(other: TerrainData) -> bool:
+    if self.is_water() != other.is_water():
+        return false
+    if abs(self.min_depth - other.min_depth) > 1:
+        return false
+    return true
 
-## Check if terrain blocks movement
-## [param terrain_id]: ID to check
-## [returns]: True if terrain is impassable
-func is_impassable(terrain_id: String) -> bool:
-    return get_terrain(terrain_id).impassable
+func is_water() -> bool:
+    return "water" in name.to_lower()
 
-## Get random material variation for terrain
-## [param terrain_id]: ID to check
-## [returns]: Material resource or null
-func get_random_material(terrain_id: String) -> Material:
-    var terrain = get_terrain(terrain_id)
-    if terrain.material_variations.is_empty():
-        return terrain.visual_material
-    return terrain.material_variations.pick_random()
+func is_impassable_for(unit: UnitHandler) -> bool:
+    return get_movement_cost(unit.mobility_type) >= 999
