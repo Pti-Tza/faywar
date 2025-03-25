@@ -1,8 +1,10 @@
 extends BaseController
 class_name PlayerController
 
+static var instance : PlayerController
 
-
+func _init() -> void:
+    instance = self
 
 func begin_turn(unit: UnitHandler) -> void:
     _current_unit = unit

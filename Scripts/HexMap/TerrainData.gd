@@ -27,6 +27,11 @@ extends Resource
     UnitData.MobilityType.AERIAL: 0.5
 }
 
+@export_category("Visuals")
+@export var mesh: Mesh
+@export var base_material: Material
+@export var material_variations: Array[Material]
+
 # Cache for quick terrain lookups (ID: TerrainType)
 var _terrain_cache: Dictionary = {}
 

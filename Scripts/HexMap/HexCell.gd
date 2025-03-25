@@ -8,8 +8,24 @@ extends Node3D
 ## Coordinates are managed in axial (q,r) format with cube coordinate validation.
 
 ## Axial coordinates (q, r) - read only after creation
-var q: int
-var r: int
+var axial_coords: Vector2i = Vector2i.ZERO
+
+func initialize(q2: int, r2: int) -> void:
+    axial_coords = Vector2i(q2, r2)
+    name = "HexCell(%d,%d)" % [q2, r2]
+
+# Helper properties
+var q: int : get = get_q
+var r: int : get = get_r
+
+func get_q() -> int:
+    return axial_coords.x
+
+func get_r() -> int:
+    return axial_coords.y
+
+
+
 ## Reference to parent grid manager
 var grid_manager: HexGridManager
 
@@ -20,12 +36,11 @@ var grid_manager: HexGridManager
         update_visuals()
 
 ## Vertical elevation level (0 = ground level)
-@export_range(0, 10, 1, "or_greater") var elevation: int = 0 :
+@export var elevation: float = 0 :
     set(value):
-        # Clamp elevation between 0 and max defined value
-        elevation = clampi(value, 0, 10)
+        
         # Update vertical position using height step
-        position.y = elevation * TERRAIN_HEIGHT_STEP
+        position.y = elevation 
         # Notify systems of elevation change
         elevation_changed.emit(elevation)
 
@@ -49,8 +64,7 @@ var cover: CoverType = CoverType.NONE :
         cover = value
         cover_changed.emit(cover)
 
-## Height increment per elevation level (meters)
-const TERRAIN_HEIGHT_STEP: float = 0.5
+var mesh_instance: MeshInstance3D
 
 ## Cover type classification system
 enum CoverType {
@@ -73,7 +87,9 @@ func _init(axial_q: int, axial_r: int) -> void:
     r = axial_r
     name = "HexCell(%d,%d)" % [q, r]
 
-
+func _ready():
+    mesh_instance = $MeshInstance3D
+    update_visuals()
 ## Calculates movement cost for a unit type
 ## [br][param mobility_type]: Unit's movement capability type
 ## [br][returns]: Total movement cost as float
@@ -83,16 +99,24 @@ func get_movement_cost(mobility_type: UnitData.MobilityType) -> float:
     return base_cost + elevation_cost
 
 ## Updates visual representation of the cell
-func update_visuals() -> void:
-    if !terrain_data:
-        push_warning("HexCell missing terrain data")
+func update_visuals():
+    if !mesh_instance || !terrain_data:
         return
     
-    # Update material based on terrain type
-    $MeshInstance3D.material = terrain_data.base_material
+    mesh_instance.mesh = terrain_data.mesh
+    mesh_instance.material_override = terrain_data.material
     
-    # Apply visual elevation offset
-    $MeshInstance3D.position.y = elevation * TERRAIN_HEIGHT_STEP
+    # Elevation positioning
+    var base_position = mesh_instance.position
+    base_position.y = elevation
+    mesh_instance.position = base_position
+
+func _apply_material_variation():
+    if terrain_data.material_variations.size() > 0:
+        var variation = terrain_data.material_variations[randi() % terrain_data.material_variations.size()]
+        mesh_instance.material_override = variation
+    else:
+        mesh_instance.material_override = terrain_data.base_material
 
 ## Validates cube coordinate constraints
 func is_valid_axial() -> bool:

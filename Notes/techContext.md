@@ -8,7 +8,21 @@
 2. HexMath (axial coordinate system)
 3. DiceRoller (statistical modeling)
 
-## Constraints
+### Action Validation Rules
+1. Turn ownership requires:
+   - Active unit UUID match
+   - Valid unit reference
+   - Within turn phase window
+
+### Log Entry Structure
+```json
+{
+  "timestamp": "HH:MM:SS",
+  "type": "move|attack|ability",
+  "message": "Formatted text",
+  "color": "#HEXCODE",
+  "data": {}
+}
 
 
 ## New Weapon Data Properties

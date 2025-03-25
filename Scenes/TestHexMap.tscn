@@ -1,0 +1,31 @@
+[gd_scene load_steps=7 format=3 uid="uid://cmcrvsew2ri22"]
+
+[ext_resource type="Script" uid="uid://cnv3e3qbn8n70" path="res://Scripts/HexMap/HexGridManager.gd" id="1_r0vin"]
+[ext_resource type="Script" uid="uid://o2qyhftgba4x" path="res://Scripts/HexMap/HexMapGenerator.gd" id="2_iupxn"]
+[ext_resource type="Resource" uid="uid://dke44yycegc3m" path="res://Resources/TerrainData/TestTerrainData.tres" id="2_yfq0g"]
+[ext_resource type="ArrayMesh" uid="uid://cxeorvorwm8pv" path="res://Meshes/Hex.obj" id="3_kt0wj"]
+[ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="4_tufw7"]
+[ext_resource type="PackedScene" uid="uid://c6g70vehc44w4" path="res://Prefabs/Terrain/HexCell.tscn" id="7_kt0wj"]
+
+[node name="TestHexMap" type="Node3D"]
+
+[node name="HexGridManager" type="Node3D" parent="."]
+script = ExtResource("1_r0vin")
+terrain_data = ExtResource("2_yfq0g")
+hex_cell_scene = ExtResource("7_kt0wj")
+metadata/_custom_type_script = "uid://cnv3e3qbn8n70"
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.874823, 0.484443, 0, -0.484443, 0.874823, 0, 25.0204, 30.9494)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.549495, 0.441299, -0.709444, 0.33235, 0.663604, 0.670203, 0.76655, -0.604057, 0.217982, 0, 6.70841, 0)
+
+[node name="HexMapGenerator" type="Node3D" parent="."]
+script = ExtResource("2_iupxn")
+terrain_types = Array[ExtResource("4_tufw7")]([ExtResource("2_yfq0g")])
+generate_on_start = true
+metadata/_custom_type_script = "uid://o2qyhftgba4x"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = ExtResource("3_kt0wj")

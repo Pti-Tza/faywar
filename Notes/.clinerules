@@ -21,7 +21,16 @@
 
 - Use Mediator Pattern to handle decoupled UI and Game Logic
 
+[Action Handling]
+1. Never reference UnitHandler directly in UI
+2. Use UUIDs for all controller-unit interactions
+3. Log entries must contain raw data + formatted text
 
+[Security]
+1. Triple-layer turn validation:
+   - Instance validity
+   - Data structure check
+   - UUID ownership
 
 [Component Naming]
 - Use _handler suffix for runtime components

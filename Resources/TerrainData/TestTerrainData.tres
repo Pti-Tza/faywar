@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="TerrainData" load_steps=6 format=3 uid="uid://dke44yycegc3m"]
+
+[ext_resource type="Material" uid="uid://1kqdxhu31xg4" path="res://Materials/TerrainMaterials/Plains_material.tres" id="1_en7uj"]
+[ext_resource type="ArrayMesh" uid="uid://cxeorvorwm8pv" path="res://Meshes/Hex.obj" id="2_nm3v0"]
+[ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="3_1c0s8"]
+[ext_resource type="Script" uid="uid://cggj2nm2qh1jh" path="res://Scripts/HexMap/TerrainType.gd" id="4_7833y"]
+[ext_resource type="Resource" uid="uid://bnmgc2454qw0k" path="res://Resources/TerrainType/plains.tres" id="5_bef46"]
+
+[resource]
+script = ExtResource("3_1c0s8")
+terrain_types = Array[ExtResource("4_7833y")]([ExtResource("5_bef46")])
+default_terrain = "plains"
+elevation_cost_multiplier = 0.5
+downhill_cost_multiplier = 0.8
+mobility_costs = {
+0: 1.0,
+1: 1.5,
+2: 0.8,
+3: 2.0,
+4: 0.5
+}
+mesh = ExtResource("2_nm3v0")
+base_material = ExtResource("1_en7uj")
+material_variations = Array[Material]([ExtResource("1_en7uj")])
+metadata/_custom_type_script = "uid://dinqmy7x47n0"

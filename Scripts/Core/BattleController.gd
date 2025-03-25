@@ -18,6 +18,10 @@ signal turn_phase_changed(phase: String)
 signal victory_achieved
 ## Emitted when defeat conditions are triggered
 signal defeat_occurred
+## Action Handling
+signal action_validated(action: String, valid: bool)
+signal action_executed(action: String, result: Dictionary)
+
 
 signal unit_selected(unit: UnitHandler)
 signal movement_executed(unit: UnitHandler, path: Array[HexCell])
@@ -217,6 +221,62 @@ func _on_unit_turn_ended(controller: BaseController):
     # Progress to next unit
     _process_next_unit()
 
+
+func _on_action_requested(action: String, details: Dictionary):
+    if not validate_turn_ownership(details.unit):
+        action_validated.emit(action, false)
+        return
+    
+    var validation = false
+    match action:
+        "move":
+            validation = MovementSystem.instance.validate(details)
+        "attack":
+            validation = AttackSystem.instance.validate(details)
+    
+    action_validated.emit(action, validation)
+    
+    if validation:
+        var result = execute_action(action, details)
+        action_executed.emit(action, result)
+
+func execute_action(action: String, details: Dictionary) -> Dictionary:
+    match action:
+        "move":
+            return MovementSystem.instance.execute(details)
+        "attack":
+            return AttackSystem.instance.execute(details)
+    return {}
+
+
+func validate_turn_ownership(details: Dictionary) -> bool:
+    """Validates if the acting unit has turn ownership.
+    
+    Returns true only if:
+    1. There is an active unit in the current turn
+    2. The acting unit matches the active unit
+    3. The unit reference is valid"""
+    
+    # Null check active unit
+    if not is_instance_valid(_active_unit):
+        push_warning("Turn validation failed: No active unit")
+        return false
+    
+    # Check details contains valid unit reference
+    if not details.has("unit") or not is_instance_valid(details.unit):
+        push_warning("Turn validation failed: Invalid unit reference")
+        return false
+    
+    # Ownership check
+    var is_owner = (details.unit.uuid == _active_unit.uuid)
+    
+    # Debug logging
+    if not is_owner:
+        var active_name = _active_unit.unit_data.name
+        var attempt_name = details.unit.unit_data.name
+        push_warning("Turn violation: %s attempted action during %s's turn" % [attempt_name, active_name])
+    
+    return is_owner
 
 
 

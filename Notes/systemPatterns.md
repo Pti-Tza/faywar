@@ -93,3 +93,29 @@ func _execute_validated_move(details):
         movement_system.execute(_active_unit, details.path)
     else:
         handle_invalid_action()   
+
+## Updated Action Handling Flow
+```mermaid
+flowchart TD
+    UI[BottomActionPanel] -->|action_selected| BUI[BattleUIController]
+    BUI -->|action_intent| PC[PlayerController]
+    PC -->|action_request| BC[BattleController]
+    BC -->|validate_turn_ownership| VAL[Validation Layer]
+    VAL -->|UUID Check| UN[Unit Registry]
+    BC -->|execute_action| SYS[Game Systems]
+    SYS -->|result| BUI
+    BUI -->|update| LOG[CombatLog]
+    BUI -->|highlight| GRID[HexGrid]        
+
+New Patterns Added:
+
+UUID-Based Validation
+All unit references in actions must use UUIDs for turn validation
+
+Structured Logging
+Log entries follow {timestamp, type, message, color, data} format
+
+Three-Layer UI Mediation
+UI → UIController → PlayerController → BattleController
+
+

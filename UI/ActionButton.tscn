@@ -1,3 +1,5 @@
 [gd_scene format=3 uid="uid://4ecjraakmp3l"]
 
-[node name="ActionButton" type="Node2D"]
+[node name="Button" type="Button"]
+offset_right = 92.0
+offset_bottom = 63.0

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TerrainType" load_steps=3 format=3 uid="uid://bnmgc2454qw0k"]
+
+[ext_resource type="Script" uid="uid://cggj2nm2qh1jh" path="res://Scripts/HexMap/TerrainType.gd" id="1_2i0s2"]
+[ext_resource type="Material" uid="uid://1kqdxhu31xg4" path="res://Materials/TerrainMaterials/Plains_material.tres" id="2_ln505"]
+
+[resource]
+script = ExtResource("1_2i0s2")
+id = "plains"
+display_name = "Plains"
+movement_cost = 1.0
+defense_bonus = 0
+impassable = false
+heat_modifier = 0.0
+visual_material = ExtResource("2_ln505")
+material_variations = Array[Material]([])
+metadata/_custom_type_script = "uid://cggj2nm2qh1jh"
