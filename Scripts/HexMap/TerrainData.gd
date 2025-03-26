@@ -72,5 +72,5 @@ func is_valid_combination(other: TerrainData) -> bool:
 func is_water() -> bool:
     return "water" in name.to_lower()
 
-func is_impassable_for(unit: UnitHandler) -> bool:
-    return get_movement_cost(unit.mobility_type) >= 999
+func is_impassable_for(mobility_type:  UnitData.MobilityType) -> bool:
+    return get_movement_cost(mobility_type) >= 999

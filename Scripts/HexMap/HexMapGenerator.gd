@@ -44,7 +44,7 @@ class_name HexMapGenerator
 
 
 @export var generate_on_start: bool = false
-
+@export var draw_debug: bool = false
 
 var noise := FastNoiseLite.new()
 
@@ -74,7 +74,7 @@ func generate_map() -> Array[HexCell]:
 			cell.initialize(q, r)  # Initialize with coordinates
 			cell.position = HexGridManager.instance.axial_to_world(q, r)
 			var s = -q - r
-			
+
 			# Generate terrain
 			var terrain = generate_terrain(q, r, s)
 			cell.terrain_data = terrain
@@ -151,7 +151,8 @@ func _test_generate_map():
 	
 	HexGridManager.instance.initialize_from_data(cells)
 	# Visual debug
-	_debug_draw_map(cells)
+	if draw_debug:
+		_debug_draw_map(cells)
 
 
 func _debug_draw_map(cells: Array[HexCell]):

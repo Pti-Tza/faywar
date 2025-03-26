@@ -44,9 +44,7 @@ var grid_manager: HexGridManager
 		# Notify systems of elevation change
 		elevation_changed.emit(elevation)
 
-## Axial coordinate system (q, r) with implicit s = -q-r
-## Maintains cube coordinate constraint: q + r + s = 0
-@export var axial_coord: Vector3i
+
 
 ## World-space position calculated from axial coordinates
 ## [br]Set automatically during grid generation
@@ -87,10 +85,11 @@ func _init(axial_q: int, axial_r: int) -> void:
 	q = axial_q
 	r = axial_r
 	name = "HexCell(%d,%d)" % [q, r]
-
-func _ready():
 	mesh_instance = $MeshInstance3D
 	update_visuals()
+
+#func _ready():
+	
 ## Calculates movement cost for a unit type
 ## [br][param mobility_type]: Unit's movement capability type
 ## [br][returns]: Total movement cost as float
@@ -120,8 +119,8 @@ func _apply_material_variation():
 		mesh_instance.material_override = terrain_data.base_material
 
 ## Validates cube coordinate constraints
-func is_valid_axial() -> bool:
-	return axial_coord.x + axial_coord.y + axial_coord.z == 0
+#func is_valid_axial() -> bool:
+#	return axial_coord.x + axial_coord.y + axial_coord.z == 0
 
 ## Example usage:
 ## [codeblock]
