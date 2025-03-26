@@ -2,7 +2,7 @@
 
 [ext_resource type="ArrayMesh" uid="uid://cxeorvorwm8pv" path="res://Meshes/Hex.obj" id="1_ydjr3"]
 [ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="3_1c0s8"]
-[ext_resource type="Material" uid="uid://1kqdxhu31xg4" path="res://Materials/TerrainMaterials/Plains_material.tres" id="3_pu0pj"]
+[ext_resource type="Material" uid="uid://b3ittex1n1gjj" path="res://Materials/TerrainMaterials/Plains_material2.tres" id="3_ydjr3"]
 
 [resource]
 resource_name = "plains"
@@ -24,7 +24,7 @@ min_depth = 0
 max_depth = 0
 strategic_map_color = Color(0, 1, 0, 1)
 model = ExtResource("1_ydjr3")
-visual_material = ExtResource("3_pu0pj")
+visual_material = ExtResource("3_ydjr3")
 material_variations = Array[Material]([])
 armor_damage_mod = 1.0
 crit_chance_mod = 1.0

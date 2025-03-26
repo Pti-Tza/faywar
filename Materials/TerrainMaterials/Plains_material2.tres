@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=4 uid="uid://b3ittex1n1gjj"]
+
+[ext_resource type="Shader" uid="uid://chrkioejmv071" path="res://Shaders/terrain_blend.gdshader" id="1_6lo1n"]
+[ext_resource type="Texture2D" uid="uid://djhpnbj8ny1qb" path="res://Textures/Terrain/hand_painted_grass.png" id="2_2tnhk"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_6lo1n")
+shader_parameter/base_albedo = ExtResource("2_2tnhk")
+shader_parameter/blend_albedos = null
+shader_parameter/blend_normals = null
+shader_parameter/blend_directions = PackedVector4Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/transition_distance = 1.0

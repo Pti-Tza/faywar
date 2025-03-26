@@ -64,7 +64,7 @@ func configure_noise() -> void:
 
 func generate_map() -> Array[HexCell]:
 	var cells: Array[HexCell] = []
-	_debug_draw_map(cells)
+   # _debug_draw_map(cells)
 	for q in range(-grid_radius, grid_radius + 1):
 		var r1 = max(-grid_radius, -q - grid_radius)
 		var r2 = min(grid_radius, -q + grid_radius)
@@ -155,40 +155,77 @@ func _test_generate_map():
 
 
 func _debug_draw_map(cells: Array[HexCell]):
-	# Add immediate geometry visualization
+	if cells.is_empty():
+		push_warning("Nothing to draw - empty cell array")
+		return
+
 	var im = ImmediateMesh.new()
+	var hex_grid = HexGridManager.instance
+	var default_color = Color.GRAY
+	var terrain_groups = {}
+
+	# Battletech terrain grouping
+	for cell : HexCell in cells:
+		var terrain_name = "unknown"
+		if cell.terrain_data.name:
+			terrain_name = cell.terrain_data.name.to_lower()
+		
+		if not terrain_groups.has(terrain_name):
+			terrain_groups[terrain_name] = []
+		terrain_groups[terrain_name].append(cell)
+
+	# Draw known terrains first
+	for terrain_key in debug_colors:
+		var terrain_name = terrain_key.to_lower()
+		if terrain_groups.has(terrain_name):
+			var color = debug_colors[terrain_key]
+			_draw_terrain_surface(im, terrain_groups[terrain_name], color, hex_grid)
+			terrain_groups.erase(terrain_name)
+
+	# Draw remaining terrains with default color
+	for terrain_name in terrain_groups:
+		_draw_terrain_surface(im, terrain_groups[terrain_name], default_color, hex_grid)
+
+	if im.get_surface_count() > 0:
+		var mesh_instance = MeshInstance3D.new()
+		mesh_instance.mesh = im
+		add_child(mesh_instance)
+	else:
+		im.free()
+
+func _draw_terrain_surface(im: ImmediateMesh, cells: Array, color: Color, hex_grid: HexGridManager):
+	if cells.is_empty():
+		return
+
 	var mat = StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = color
 	
-	var hex_grid = HexGridManager.instance
-
+	im.surface_begin(Mesh.PRIMITIVE_LINES, mat)
+	
+	# Battletech-standard hex visualization
 	for cell in cells:
 		var center = hex_grid.axial_to_world(cell.q, cell.r)
-		im.surface_begin(Mesh.PRIMITIVE_LINES, mat)
+		var elevation = cell.elevation * 10
 		
-		# Draw hex outline
 		for i in 6:
-			var angle_deg = 60 * i + 30
-			var next_angle_deg = 60 * ((i + 1) % 6) + 30
+			var angle = deg_to_rad(60 * i + 30)  # Official BT rotation
+			var next_angle = deg_to_rad(60 * (i + 1) + 30)
 			var radius = hex_grid.hex_size
 			
 			var point = center + Vector3(
-				radius * cos(deg_to_rad(angle_deg)),
-				0,
-				radius * sin(deg_to_rad(angle_deg))
+				radius * cos(angle),
+				elevation,
+				radius * sin(angle)
 			)
 			
 			var next_point = center + Vector3(
-				radius * cos(deg_to_rad(next_angle_deg)),
-				0,
-				radius * sin(deg_to_rad(next_angle_deg))
+				radius * cos(next_angle),
+				elevation,
+				radius * sin(next_angle)
 			)
 			
 			im.surface_add_vertex(point)
 			im.surface_add_vertex(next_point)
-		
-		im.surface_end()
 	
-	var mesh_instance = MeshInstance3D.new()
-	mesh_instance.mesh = im
-	add_child(mesh_instance)        
+	im.surface_end()
