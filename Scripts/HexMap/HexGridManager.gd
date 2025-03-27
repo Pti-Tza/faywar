@@ -39,6 +39,7 @@ func _init():
 #region Internal State
 ## Dictionary of hex cells (key: Vector2i(q,r))
 var hex_grid: Dictionary = {}
+var cells : Array[HexCell]
 ## Cache for unit positions (unit: Node3D → HexCell)
 var _unit_positions: Dictionary = {}
 #endregion
@@ -95,7 +96,7 @@ func initialize_grid(cells: Array[HexCell]):
 ## Generates hexagonal grid with axial coordinates
 func generate_hex_grid(radius : int) -> void:
     hex_grid.clear()
-    var cells : Array[HexCell]
+    cells.clear()
     # Generate concentric rings of hex cells
     for q in range(-radius, radius + 1):
         # Calculate valid r range for current q to maintain hexagonal shape
@@ -104,20 +105,22 @@ func generate_hex_grid(radius : int) -> void:
         
         for r in range(r1, r2 + 1):
             var cell = HexCell.new(q, r)
+            
             cell.position = axial_to_world(q, r)  # Set position directly
             add_child(cell)  # Add to scene tree FIRST
             hex_grid[Vector2i(q, r)] = cell
+            cells.append(cell)
             
     print_map_size()		
     initialize_astar()		
     generate_visual_mesh(cells)		
     grid_initialized.emit()
 
-func generate_visual_mesh(cells: Array[HexCell]) -> void:
+func generate_visual_mesh(hex_cells: Array[HexCell]) -> void:
     var valid_cells: Array[HexCell] = []
     
     # 2. Type validation and filtering
-    for cell in cells:
+    for cell in hex_cells:
         if cell is HexCell:
             valid_cells.append(cell)
         else:
@@ -168,13 +171,13 @@ func generate_visual_mesh(cells: Array[HexCell]) -> void:
         mesh_instance.name = "TerrainMesh"
         add_child(mesh_instance)
         mesh_instance.mesh = array_mesh
-
+    
 
 ## Applies terrain/elevation data from generator
 func initialize_from_data(cell_data: Array[HexCell]):
     # Clear previous grid state
     hex_grid.clear()
-    
+    cells.clear()
     # Validate input data
     if cell_data.is_empty():
         push_error("Failed to initialize grid: Empty cell data array")
@@ -208,7 +211,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
         # Ensure cell is in scene tree
         if not is_instance_valid(cell.get_parent()):
             add_child(cell)
-            
+            cells.append(cell)
         # Set world position
         cell.position = axial_to_world(coords.x, coords.y)
         
@@ -239,7 +242,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
     generate_visual_mesh(grid_cells)
     
     # Final validation
-    var expected_cells = (2 * grid_radius + 1) * (2 * grid_radius + 1)
+    var expected_cells = 1 + 6 * (grid_radius * (grid_radius + 1)) / 2
     if hex_grid.size() != expected_cells:
         push_error("Cell count mismatch. Expected: %d, Actual: %d" % [
             expected_cells,

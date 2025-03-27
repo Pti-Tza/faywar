@@ -7,6 +7,8 @@
 [node name="HexCell" type="Node3D"]
 script = ExtResource("1_0fjb6")
 terrain_data = ExtResource("2_g64j1")
+elevation = null
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="MeshInstance3" type="MeshInstance3D" parent="."]
+visible = false
 mesh = ExtResource("1_hqrrd")

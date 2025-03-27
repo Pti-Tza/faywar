@@ -117,11 +117,11 @@ func generate_elevation(q: int, r: int, s: int) -> int:
 		height_params.max_elevation
 	)
 
-func get_terrain_by_name(name: String) -> TerrainData:
+func get_terrain_by_name(terrain_name: String) -> TerrainData:
 	for terrain in terrain_types:
-		if terrain.name.to_lower() == name.to_lower():
+		if terrain.name.to_lower() == terrain_name.to_lower():
 			return terrain
-	push_error("Terrain type %s not found" % name)
+	push_error("Terrain type %s not found" % terrain_name)
 	return null
 
 func debug_draw_map(cells: Array[HexCell]) -> void:

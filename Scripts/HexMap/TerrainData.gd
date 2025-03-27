@@ -28,7 +28,7 @@ class_name TerrainData
 
 ### Advanced Properties ###
 @export_category("Visual Presentation")
-@export var combat_map_texture: Material
+
 @export var strategic_map_color: Color
 @export var model: Mesh
 
@@ -53,24 +53,24 @@ class_name TerrainData
 
 # Battletech-standard movement cost accessor
 func get_movement_cost(mobility_type: UnitData.MobilityType) -> int:
-    match mobility_type:
-        UnitData.MobilityType.BIPEDAL: return foot_movement
-        UnitData.MobilityType.WHEELED: return wheeled_movement
-        UnitData.MobilityType.TRACKED: return tracked_movement
-        UnitData.MobilityType.HOVER: return hover_movement
-        UnitData.MobilityType.AERIAL: return vtol_movement
-        _: return 999
+	match mobility_type:
+		UnitData.MobilityType.BIPEDAL: return foot_movement
+		UnitData.MobilityType.WHEELED: return wheeled_movement
+		UnitData.MobilityType.TRACKED: return tracked_movement
+		UnitData.MobilityType.HOVER: return hover_movement
+		UnitData.MobilityType.AERIAL: return vtol_movement
+		_: return 999
 
 # Official BT terrain validation (TO p.315)
 func is_valid_combination(other: TerrainData) -> bool:
-    if self.is_water() != other.is_water():
-        return false
-    if abs(self.min_depth - other.min_depth) > 1:
-        return false
-    return true
+	if self.is_water() != other.is_water():
+		return false
+	if abs(self.min_depth - other.min_depth) > 1:
+		return false
+	return true
 
 func is_water() -> bool:
-    return "water" in name.to_lower()
+	return "water" in name.to_lower()
 
 func is_impassable_for(mobility_type:  UnitData.MobilityType) -> bool:
-    return get_movement_cost(mobility_type) >= 999
+	return get_movement_cost(mobility_type) >= 999

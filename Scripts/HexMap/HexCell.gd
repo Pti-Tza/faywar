@@ -13,7 +13,7 @@ var axial_coords: Vector2i = Vector2i.ZERO
 func initialize(q2: int, r2: int) -> void:
 	axial_coords = Vector2i(q2, r2)
 	name = "HexCell(%d,%d)" % [q2, r2]
-
+	print(name+ " initialized")
 # Helper properties
 var q: int : get = get_q
 var r: int : get = get_r
@@ -80,12 +80,15 @@ signal cover_changed(new_cover: CoverType)
 
 # Initialize with axial coordinates
 func _init(axial_q: int, axial_r: int) -> void:
+	mesh_instance = MeshInstance3D.new()
+	add_child(mesh_instance)
+	mesh_instance.name = "MeshInstance3D"
 	grid_manager = HexGridManager.instance
 	assert(axial_q + axial_r <= grid_manager.grid_radius, "Invalid axial coordinates")
 	q = axial_q
 	r = axial_r
 	name = "HexCell(%d,%d)" % [q, r]
-	mesh_instance = $MeshInstance3D
+	
 	update_visuals()
 
 #func _ready():
@@ -103,8 +106,8 @@ func update_visuals():
 	if !mesh_instance || !terrain_data:
 		return
 	
-	mesh_instance.mesh = terrain_data.mesh
-	mesh_instance.material_override = terrain_data.material
+	mesh_instance.mesh = terrain_data.model
+	mesh_instance.material_override = terrain_data.visual_material
 	
 	# Elevation positioning
 	var base_position = mesh_instance.position

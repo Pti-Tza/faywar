@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://cmcrvsew2ri22"]
+[gd_scene load_steps=17 format=4 uid="uid://cmcrvsew2ri22"]
 
 [ext_resource type="Script" uid="uid://cnv3e3qbn8n70" path="res://Scripts/HexMap/HexGridManager.gd" id="1_r0vin"]
 [ext_resource type="Script" uid="uid://o2qyhftgba4x" path="res://Scripts/HexMap/HexMapGenerator.gd" id="2_iupxn"]
@@ -15,13 +15,10 @@
 render_priority = 0
 shader = ExtResource("6_kf3ap")
 shader_parameter/base_albedo = ExtResource("7_equ6m")
-shader_parameter/active_blend_count = 0
 shader_parameter/blend_albedos = null
 shader_parameter/blend_normals = null
-shader_parameter/blend_directions = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/blend_directions = PackedVector4Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/transition_distance = 1.0
-shader_parameter/blend_width = 2.0
-shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_1s0kv"]
 resource_name = "water"
@@ -53,13 +50,10 @@ metadata/_custom_type_script = "uid://dinqmy7x47n0"
 render_priority = 0
 shader = ExtResource("6_kf3ap")
 shader_parameter/base_albedo = ExtResource("9_wykde")
-shader_parameter/active_blend_count = 0
 shader_parameter/blend_albedos = null
 shader_parameter/blend_normals = null
-shader_parameter/blend_directions = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/blend_directions = PackedVector4Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/transition_distance = 1.0
-shader_parameter/blend_width = 2.0
-shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_tufw7"]
 resource_name = "forest"
@@ -91,13 +85,10 @@ metadata/_custom_type_script = "uid://dinqmy7x47n0"
 render_priority = 0
 shader = ExtResource("6_kf3ap")
 shader_parameter/base_albedo = ExtResource("10_qd11a")
-shader_parameter/active_blend_count = 0
 shader_parameter/blend_albedos = null
 shader_parameter/blend_normals = null
-shader_parameter/blend_directions = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/blend_directions = PackedVector4Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/transition_distance = 1.0
-shader_parameter/blend_width = 2.0
-shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_equ6m"]
 resource_name = "mountain"
@@ -129,7 +120,6 @@ metadata/_custom_type_script = "uid://dinqmy7x47n0"
 
 [node name="HexGridManager" type="Node3D" parent="."]
 script = ExtResource("1_r0vin")
-grid_radius = 2
 hex_cell_scene = ExtResource("7_kt0wj")
 metadata/_custom_type_script = "uid://cnv3e3qbn8n70"
 
@@ -146,11 +136,7 @@ transform = Transform3D(0.549495, 0.441299, -0.709444, 0.33235, 0.663604, 0.6702
 
 [node name="HexMapGenerator" type="Node3D" parent="."]
 script = ExtResource("2_iupxn")
-grid_radius = 2
 terrain_types = Array[ExtResource("4_tufw7")]([SubResource("Resource_1s0kv"), ExtResource("2_yfq0g"), SubResource("Resource_tufw7"), SubResource("Resource_equ6m")])
-height_params = null
-debug_colors = null
-generation_presets = null
 generate_on_start = true
 draw_debug = true
 
