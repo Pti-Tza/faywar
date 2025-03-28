@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://cmcrvsew2ri22"]
+[gd_scene load_steps=17 format=3 uid="uid://cmcrvsew2ri22"]
 
 [ext_resource type="Script" uid="uid://cnv3e3qbn8n70" path="res://Scripts/HexMap/HexGridManager.gd" id="1_r0vin"]
 [ext_resource type="Script" uid="uid://o2qyhftgba4x" path="res://Scripts/HexMap/HexMapGenerator.gd" id="2_iupxn"]
@@ -6,12 +6,21 @@
 [ext_resource type="ArrayMesh" uid="uid://cxeorvorwm8pv" path="res://Meshes/Hex.obj" id="3_kt0wj"]
 [ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="4_tufw7"]
 [ext_resource type="Shader" uid="uid://chrkioejmv071" path="res://Shaders/terrain_blend.gdshader" id="6_kf3ap"]
+[ext_resource type="Texture2D" uid="uid://faul8bj3417c" path="res://Textures/Terrain/water.jpg" id="7_equ6m"]
 [ext_resource type="PackedScene" uid="uid://c6g70vehc44w4" path="res://Prefabs/Terrain/HexCell.tscn" id="7_kt0wj"]
+[ext_resource type="Texture2D" uid="uid://b2jhe7xkmvcks" path="res://Textures/Terrain/copa de arbol.jpg" id="9_wykde"]
+[ext_resource type="Texture2D" uid="uid://lx6iqyd2j6p" path="res://Textures/Terrain/stone.jpg" id="10_qd11a"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_dr2y5"]
 render_priority = 0
 shader = ExtResource("6_kf3ap")
-shader_parameter/texture_scale = 1.0
+shader_parameter/base_albedo = ExtResource("7_equ6m")
+shader_parameter/active_blend_count = 0
+shader_parameter/blend_albedos = null
+shader_parameter/blend_normals = null
+shader_parameter/blend_directions = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/transition_distance = 1.0
+shader_parameter/blend_width = 2.0
 shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_1s0kv"]
@@ -32,7 +41,6 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
-terrain_texture = "grass"
 strategic_map_color = Color(0, 0, 0, 1)
 model = ExtResource("3_kt0wj")
 visual_material = SubResource("ShaderMaterial_dr2y5")
@@ -44,7 +52,13 @@ metadata/_custom_type_script = "uid://dinqmy7x47n0"
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_0clhf"]
 render_priority = 0
 shader = ExtResource("6_kf3ap")
-shader_parameter/texture_scale = 1.0
+shader_parameter/base_albedo = ExtResource("9_wykde")
+shader_parameter/active_blend_count = 0
+shader_parameter/blend_albedos = null
+shader_parameter/blend_normals = null
+shader_parameter/blend_directions = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/transition_distance = 1.0
+shader_parameter/blend_width = 2.0
 shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_tufw7"]
@@ -65,7 +79,6 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
-terrain_texture = "grass"
 strategic_map_color = Color(0, 0, 0, 1)
 model = ExtResource("3_kt0wj")
 visual_material = SubResource("ShaderMaterial_0clhf")
@@ -77,7 +90,13 @@ metadata/_custom_type_script = "uid://dinqmy7x47n0"
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_eq4dy"]
 render_priority = 0
 shader = ExtResource("6_kf3ap")
-shader_parameter/texture_scale = 1.0
+shader_parameter/base_albedo = ExtResource("10_qd11a")
+shader_parameter/active_blend_count = 0
+shader_parameter/blend_albedos = null
+shader_parameter/blend_normals = null
+shader_parameter/blend_directions = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/transition_distance = 1.0
+shader_parameter/blend_width = 2.0
 shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_equ6m"]
@@ -98,7 +117,6 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
-terrain_texture = "grass"
 strategic_map_color = Color(0, 0, 0, 1)
 model = ExtResource("3_kt0wj")
 visual_material = SubResource("ShaderMaterial_eq4dy")
@@ -112,8 +130,6 @@ metadata/_custom_type_script = "uid://dinqmy7x47n0"
 [node name="HexGridManager" type="Node3D" parent="."]
 script = ExtResource("1_r0vin")
 grid_radius = 2
-elevation_step = 5.0
-create_empty_grid = true
 hex_cell_scene = ExtResource("7_kt0wj")
 metadata/_custom_type_script = "uid://cnv3e3qbn8n70"
 
@@ -127,13 +143,16 @@ far = 4021.45
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.549495, 0.441299, -0.709444, 0.33235, 0.663604, 0.670203, 0.76655, -0.604057, 0.217982, 0, 6.70841, 0)
-shadow_enabled = true
 
 [node name="HexMapGenerator" type="Node3D" parent="."]
 script = ExtResource("2_iupxn")
 grid_radius = 2
 terrain_types = Array[ExtResource("4_tufw7")]([SubResource("Resource_1s0kv"), ExtResource("2_yfq0g"), SubResource("Resource_tufw7"), SubResource("Resource_equ6m")])
+height_params = null
+debug_colors = null
+generation_presets = null
+generate_on_start = true
+draw_debug = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-visible = false
 mesh = ExtResource("3_kt0wj")

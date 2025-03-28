@@ -22,6 +22,7 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
+terrain_texture = "grass"
 strategic_map_color = Color(0, 1, 0, 1)
 model = ExtResource("1_ydjr3")
 visual_material = ExtResource("3_ydjr3")

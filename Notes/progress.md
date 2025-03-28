@@ -34,8 +34,3 @@
 - [X] Structured combat logging system
 - [X] Decoupled UI action pipeline
 
-## New Validation Metrics
-| Check Type | Avg Time | Peak Usage |
-|------------|----------|------------|
-| UUID Match | 0.02ms | 0.05ms |
-| Log Format | 0.15ms | 0.3ms | 

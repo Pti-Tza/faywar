@@ -16,10 +16,17 @@ static var instance: HexGridManager
 ## Number of concentric rings around center (0 = single hex)
 @export var grid_radius: int = 10
 ## Size of individual hexes (X: width, Y: height)
-@export var hex_size: float = 10
+@export var outer_radius: float = 10.0:
+    set(value):
+        outer_radius = value
+        
+        
+
+var inner_radius: float = outer_radius * sqrt(3.0) / 2.0
+
 @export var hex_height: float = 10
 ## Vertical height per elevation level
-@export var elevation_step: float = 1.0
+@export var elevation_step: float = 10.0
 
 @export var create_empty_grid: bool
 
@@ -52,8 +59,12 @@ signal unit_moved(unit: Node3D, from: Vector3i, to: Vector3i)
 
 #region Constants
 const HEX_DIRECTIONS = [
-    Vector2i(1, 0), Vector2i(1, -1), Vector2i(0, -1),
-    Vector2i(-1, 0), Vector2i(-1, 1), Vector2i(0, 1)
+    Vector2i(1, 0),  # Northeast
+    Vector2i(1, -1), # North
+    Vector2i(0, -1), # Northwest
+    Vector2i(-1, 0), # Southwest
+    Vector2i(-1, 1), # South
+    Vector2i(0, 1)   # Southeast
 ]
 #endregion
 
@@ -78,7 +89,7 @@ func print_map_size():
     var map_stats = {
         "width": 2 * grid_radius + 1,
         "height": 2 * grid_radius + 1,
-        "expected_cells": pow(2 * grid_radius + 1, 2),
+        "expected_cells":  1 + 6 * (grid_radius * (grid_radius + 1)) / 2,
         "actual_cells": hex_grid.size()
     }
     print("Battletech Map Initialized:\n", JSON.stringify(map_stats, "\t"))	
@@ -112,8 +123,8 @@ func generate_hex_grid(radius : int) -> void:
             cells.append(cell)
             
     print_map_size()		
-    initialize_astar()		
-    generate_visual_mesh(cells)		
+    #initialize_astar()		
+    update_cells_meshes(cells)		
     grid_initialized.emit()
 
 func generate_visual_mesh(hex_cells: Array[HexCell]) -> void:
@@ -142,9 +153,9 @@ func generate_visual_mesh(hex_cells: Array[HexCell]) -> void:
         for i in 6:
             var angle = deg_to_rad(60 * i + 30)
             var vertex = world_pos + Vector3(
-                cos(angle) * hex_size * 0.95,
+                cos(angle) * outer_radius * 0.95,
                 height,
-                sin(angle) * hex_size * 0.95
+                sin(angle) * outer_radius * 0.95
             )
             surface_tool.add_vertex(vertex)
         
@@ -172,6 +183,23 @@ func generate_visual_mesh(hex_cells: Array[HexCell]) -> void:
         add_child(mesh_instance)
         mesh_instance.mesh = array_mesh
     
+func update_cells_meshes(hex_cells: Array[HexCell]) -> void:
+    var valid_cells: Array[HexCell] = []
+    
+    # 2. Type validation and filtering
+    for cell in hex_cells:
+        if cell is HexCell:
+            valid_cells.append(cell)
+        else:
+            push_error("Invalid cell type in visual mesh generation: %s" % str(cell))
+    
+    
+    for cell in valid_cells:
+      
+      
+    
+      cell.mesh_instance.generate_mesh()
+      cell.update_visuals()
 
 ## Applies terrain/elevation data from generator
 func initialize_from_data(cell_data: Array[HexCell]):
@@ -194,7 +222,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
             continue
 
         var coords = cell.axial_coords  # Should be Vector2i
-        
+        var elevation = cell.elevation
         # Battletech map validation: Check hex coordinate validity
         if not HexMath.is_valid_axial(coords.x, coords.y, grid_radius):
             push_error("Invalid axial coordinates (%d, %d), skipping" % [coords.x, coords.y])
@@ -214,7 +242,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
             cells.append(cell)
         # Set world position
         cell.position = axial_to_world(coords.x, coords.y)
-        
+        cell.elevation = elevation
         # Debug output
         if OS.is_debug_build():
             print("Initialized cell %s: %s (Elevation: %d)" % [
@@ -237,9 +265,9 @@ func initialize_from_data(cell_data: Array[HexCell]):
     initialize_astar()
     var grid_cells: Array[HexCell] = []
     for cell in hex_grid.values():
-       if cell is HexCell:
-         grid_cells.append(cell)
-    generate_visual_mesh(grid_cells)
+        if cell is HexCell:
+            grid_cells.append(cell)
+    update_cells_meshes(grid_cells)
     
     # Final validation
     var expected_cells = 1 + 6 * (grid_radius * (grid_radius + 1)) / 2
@@ -458,14 +486,14 @@ func _reset_mobility() -> void:
 #region Coordinate Conversions
 ## Converts axial coordinates (q, r) to world space position
 func axial_to_world(q: int, r: int) -> Vector3:
-    var x = hex_size * (sqrt(3) * q + sqrt(3) / 2 * r)
-    var z = hex_height * (3.0 / 2 * r)
+    var x = (q + r * 0.5) * inner_radius * 2.0
+    var z = r * outer_radius * 1.5
     return Vector3(x, 0, z)
 
 ## Converts world space position to axial coordinates (q, r)
 func world_to_axial(world_pos: Vector3) -> Vector2i:
-    var q = (sqrt(3) / 3 * world_pos.x - 1.0 / 3 * world_pos.z) / hex_size
-    var r = (2.0 / 3 * world_pos.z) / hex_height
+    var q = (sqrt(3) / 3 * world_pos.x - 1.0 / 3 * world_pos.z) / inner_radius
+    var r = (2.0 / 3 * world_pos.z) / outer_radius
     return cube_to_axial(round_axial(q, r))
 
 func update_cell_elevation(q: int, r: int, new_elevation: int):
@@ -522,6 +550,12 @@ func get_neighbors(q: int, r: int) -> Array[HexCell]:
             neighbors.append(hex_grid[neighbor_coord])
     return neighbors
 
+func get_neighbor(q: int, r: int, direction: int) -> HexCell:
+    var dir = HEX_DIRECTIONS[direction % 6]
+    var neighbor_q = q + dir.x
+    var neighbor_r = r + dir.y
+    return get_cell(neighbor_q, neighbor_r)
+
 ## Gets all cells within specified hexagonal distance
 func get_cells_in_range(center: Vector2i, rang: int) -> Array[HexCell]:
     var results = []
@@ -537,26 +571,4 @@ func get_cells_in_range(center: Vector2i, rang: int) -> Array[HexCell]:
                 if hex_grid.has(coord):
                     results.append(hex_grid[coord])
     return results
-#endregion
-
-
-#region Debug
-## Debug visualization of grid structure (requires DebugDraw3D addon)
-func draw_debug_grid() -> void:
-    for cell in hex_grid.values():
-        var center = cell.position
-        for i in 6:
-            var angle_deg = 60 * i
-            var angle_rad = deg_to_rad(angle_deg)
-            var point = center + Vector3(
-                hex_size * cos(angle_rad),
-                0,
-                hex_height * sin(angle_rad)
-            )
-            var next_point = center + Vector3(
-                hex_size * cos(angle_rad + deg_to_rad(60)),
-                0,
-                hex_height * sin(angle_rad + deg_to_rad(60))
-            )
-            DebugDraw3D.draw_line(point, next_point, Color.WHITE, 0.1)
 #endregion

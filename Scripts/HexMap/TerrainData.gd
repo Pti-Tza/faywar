@@ -29,6 +29,7 @@ class_name TerrainData
 ### Advanced Properties ###
 @export_category("Visual Presentation")
 
+@export var terrain_texture: String = "grass"
 @export var strategic_map_color: Color
 @export var model: Mesh
 
