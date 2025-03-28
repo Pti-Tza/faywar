@@ -7,7 +7,7 @@ var _cell: HexCell
 
 func initialize(cell: HexCell):
 	_cell = cell
-	generate_mesh()
+	#generate_mesh()
 
 func generate_mesh():
 	var st = SurfaceTool.new()

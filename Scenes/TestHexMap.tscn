@@ -113,7 +113,6 @@ metadata/_custom_type_script = "uid://dinqmy7x47n0"
 script = ExtResource("1_r0vin")
 grid_radius = 2
 elevation_step = 5.0
-create_empty_grid = true
 hex_cell_scene = ExtResource("7_kt0wj")
 metadata/_custom_type_script = "uid://cnv3e3qbn8n70"
 
@@ -133,6 +132,8 @@ shadow_enabled = true
 script = ExtResource("2_iupxn")
 grid_radius = 2
 terrain_types = Array[ExtResource("4_tufw7")]([SubResource("Resource_1s0kv"), ExtResource("2_yfq0g"), SubResource("Resource_tufw7"), SubResource("Resource_equ6m")])
+generate_on_start = true
+draw_debug = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 visible = false
