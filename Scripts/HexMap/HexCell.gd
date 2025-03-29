@@ -37,7 +37,7 @@ var grid_manager: HexGridManager
 @export var terrain_data: TerrainData :
     set(value):
         terrain_data = value
-        update_visuals()
+ 
 
 ## Vertical elevation level (0 = ground level)
 @export var elevation: float :
@@ -48,8 +48,18 @@ var grid_manager: HexGridManager
         # Notify systems of elevation change
         elevation_changed.emit(elevation)
 
+# Add terrain type index
+@export var terrain_type_index: int = 0
+var blend_weights: Vector3 = Vector3(1, 0, 0)
+var neighbor_indices: Vector3 = Vector3(0, 0, 0)
 
-
+var color: Color:
+    get:
+      return terrain_data.strategic_map_color
+var texture_index: int
+var normal_index: int
+var variation_index: int
+      
 ## World-space position calculated from axial coordinates
 ## [br]Set automatically during grid generation
 var world_position: Vector3
@@ -94,11 +104,7 @@ func _init(axial_q: int, axial_r: int) -> void:
     name = "HexCell(%d,%d)" % [q, r]
     
     
-func _ready() -> void:
-    mesh_instance = HexMesh.new()
-    
-    mesh_instance.initialize(self)
-    add_child(mesh_instance)
+
     
     
 func initialize(q2: int, r2: int) -> void:
@@ -120,18 +126,7 @@ func get_movement_cost(mobility_type: UnitData.MobilityType) -> float:
     return base_cost + elevation_cost
 
 ## Updates visual representation of the cell
-func update_visuals():
-    if !mesh_instance || !terrain_data:
-        print("NO VISUALS!")
-        return
-    
 
-    mesh_instance.material_override = terrain_data.visual_material
-    print("GOT VISUALS! "+ terrain_data.name)
-    # Elevation positioning
-    #var base_position = mesh_instance.position
-    #base_position.y = elevation 
-    #mesh_instance.position = base_position
 
 func _apply_material_variation():
     if terrain_data.material_variations.size() > 0:
@@ -139,6 +134,20 @@ func _apply_material_variation():
         mesh_instance.material_override = variation
     else:
         mesh_instance.material_override = terrain_data.base_material
+
+func update_texture_indices():
+    if !terrain_data: return
+    
+    var map = HexGridManager.instance.terrain_index_map.get(terrain_data)
+    if !map: return
+    
+    # Random variation if available
+    var variation_count = max(terrain_data.texture_variations.size(), 1)
+    variation_index = randi() % variation_count
+    
+    texture_index = map.base_index + variation_index
+    normal_index = texture_index  # Assuming 1:1 texture/normal mapping
+
 
 ## Validates cube coordinate constraints
 #func is_valid_axial() -> bool:

@@ -29,16 +29,14 @@ class_name TerrainData
 ### Advanced Properties ###
 @export_category("Visual Presentation")
 
-@export var terrain_texture: String = "grass"
-@export var strategic_map_color: Color
-@export var model: Mesh
 
-## Base material for this terrain type
-@export var visual_material: Material
-## Array of material variations for visual diversity
-@export var material_variations: Array[Material]
-## Particle effect for environmental interactions
-#@export var footstep_effect: GPUParticles3D
+@export var strategic_map_color: Color
+
+@export_category("Textures")
+@export var base_texture: Texture2D
+@export var texture_variations: Array[Texture2D]
+@export var normal_map: Texture2D
+@export var texture_scale: float = 0.1
 
 @export_category("Audio Properties")
 ## Footstep sound for standard movement
@@ -54,24 +52,31 @@ class_name TerrainData
 
 # Battletech-standard movement cost accessor
 func get_movement_cost(mobility_type: UnitData.MobilityType) -> int:
-	match mobility_type:
-		UnitData.MobilityType.BIPEDAL: return foot_movement
-		UnitData.MobilityType.WHEELED: return wheeled_movement
-		UnitData.MobilityType.TRACKED: return tracked_movement
-		UnitData.MobilityType.HOVER: return hover_movement
-		UnitData.MobilityType.AERIAL: return vtol_movement
-		_: return 999
+    match mobility_type:
+        UnitData.MobilityType.BIPEDAL: return foot_movement
+        UnitData.MobilityType.WHEELED: return wheeled_movement
+        UnitData.MobilityType.TRACKED: return tracked_movement
+        UnitData.MobilityType.HOVER: return hover_movement
+        UnitData.MobilityType.AERIAL: return vtol_movement
+        _: return 999
 
 # Official BT terrain validation (TO p.315)
 func is_valid_combination(other: TerrainData) -> bool:
-	if self.is_water() != other.is_water():
-		return false
-	if abs(self.min_depth - other.min_depth) > 1:
-		return false
-	return true
+    if self.is_water() != other.is_water():
+        return false
+    if abs(self.min_depth - other.min_depth) > 1:
+        return false
+    return true
 
 func is_water() -> bool:
-	return "water" in name.to_lower()
+    return "water" in name.to_lower()
 
 func is_impassable_for(mobility_type:  UnitData.MobilityType) -> bool:
-	return get_movement_cost(mobility_type) >= 999
+    return get_movement_cost(mobility_type) >= 999
+
+func get_all_textures() -> Array[Texture2D]:
+    var textures : Array[Texture2D]
+    if base_texture:
+        textures.append(base_texture)
+    textures.append_array(texture_variations)
+    return textures

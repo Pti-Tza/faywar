@@ -38,6 +38,12 @@ var inner_radius: float = outer_radius * sqrt(3.0) / 2.0
 var astar: DirectionalAStar
 var astar_graphs = {}
 
+
+var terrain_texture_array: Texture2DArray
+var terrain_normal_array: Texture2DArray
+var terrain_index_map: Dictionary = {}  # {TerrainData: {base_idx: int, count: int}}
+
+
 func _init():
     instance = self
 
@@ -94,14 +100,7 @@ func print_map_size():
     }
     print("Battletech Map Initialized:\n", JSON.stringify(map_stats, "\t"))	
 
-func initialize_grid(cells: Array[HexCell]):
-    hex_grid.clear()
-    for cell in cells:
-        hex_grid[Vector2i(cell.q, cell.r)] = cell
-        add_child(cell)
-    
-    initialize_astar()
-    grid_initialized.emit()
+
 
 
 ## Generates hexagonal grid with axial coordinates
@@ -127,61 +126,84 @@ func generate_hex_grid(radius : int) -> void:
     update_cells_meshes(cells)		
     grid_initialized.emit()
 
-func generate_visual_mesh(hex_cells: Array[HexCell]) -> void:
-    var valid_cells: Array[HexCell] = []
+func initialize_grid(cell_data: Array[HexCell]):
+    # Build texture arrays first
+    if !build_texture_arrays():
+        push_error("Failed to build texture arrays")
+        return
     
-    # 2. Type validation and filtering
-    for cell in hex_cells:
-        if cell is HexCell:
-            valid_cells.append(cell)
-        else:
-            push_error("Invalid cell type in visual mesh generation: %s" % str(cell))
+    # Assign indices to cells
+    for cell in cell_data:
+        cell.update_texture_indices()
     
-    # 3. Create surface tool and mesh
+    # Set shader parameters
+    var material = $TerrainMesh.material_override
+    material.set_shader_parameter("albedo_array", terrain_texture_array)
+    material.set_shader_parameter("normal_array", terrain_normal_array)
+    
+    # Generate mesh with texture indices
+    generate_textured_mesh(cell_data)
+
+func generate_textured_mesh(cells: Array[HexCell]):
     var surface_tool = SurfaceTool.new()
-    var array_mesh = ArrayMesh.new()
-    
-    # 4. Begin mesh construction
     surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
     
-    # 5. Generate vertex data for valid cells
-    for cell in valid_cells:
-        var world_pos = axial_to_world(cell.q, cell.r)
-        var height = cell.elevation * elevation_step
+    # MUST set format before any vertex operations
+    surface_tool.set_custom_format(0, SurfaceTool.CUSTOM_RGBA8_UNORM)
+    
+    for cell in cells:
+        var center = cell.position
+        var corners = _generate_hex_corners(cell)
         
-        # Create perimeter vertices
-        for i in 6:
-            var angle = deg_to_rad(60 * i + 30)
-            var vertex = world_pos + Vector3(
-                cos(angle) * outer_radius * 0.95,
-                height,
-                sin(angle) * outer_radius * 0.95
-            )
-            surface_tool.add_vertex(vertex)
+        # Validate indices are within 0-255 range
+        assert(cell.texture_index >= 0 && cell.texture_index < 256, 
+            "Invalid texture index: %d" % cell.texture_index)
+        assert(cell.normal_index >= 0 && cell.normal_index < 256, 
+            "Invalid normal index: %d" % cell.normal_index)
         
-        # Center vertex
-        surface_tool.add_vertex(world_pos + Vector3(0, height, 0))
-    
-    # 6. Generate triangle indices
-    var vert_index = 0
-    for _cell in valid_cells:
+        var custom_data = Color(
+            cell.texture_index / 255.0,
+            cell.normal_index / 255.0,
+            0.0,
+            0.0
+        )
+        
+        # Add triangle vertices with explicit format
         for i in 6:
-            surface_tool.add_index(vert_index + i)
-            surface_tool.add_index(vert_index + (i + 1) % 6)
-            surface_tool.add_index(vert_index + 6)  # Center index
-        vert_index += 7
+            var next_i = (i + 1) % 6
+            var verts = [center, corners[i], corners[next_i]]
+            
+            for v in verts:
+                surface_tool.set_custom(0, custom_data)
+                surface_tool.add_vertex(v)
     
-    # 7. Commit to array mesh
-    surface_tool.commit(array_mesh)
+    # Create/update mesh instance
+    var mesh := surface_tool.commit()
+    if !mesh:
+        push_error("Failed to commit terrain mesh")
+        return
     
-    # 8. Assign to mesh instance
-    if $TerrainMesh is MeshInstance3D:
-        $TerrainMesh.mesh = array_mesh
-    else:
-        var mesh_instance = MeshInstance3D.new()
+    var mesh_instance := $TerrainMesh as MeshInstance3D
+    if !mesh_instance:
+        mesh_instance = MeshInstance3D.new()
         mesh_instance.name = "TerrainMesh"
         add_child(mesh_instance)
-        mesh_instance.mesh = array_mesh
+    
+    mesh_instance.mesh = mesh
+    
+    
+func _generate_hex_corners(cell: HexCell) -> Array:
+    var corners = []
+    var center = cell.position
+    for i in 6:
+        var angle = deg_to_rad(60 * i + 30)
+        var corner = center + Vector3(
+            cos(angle) * outer_radius,
+            0,
+            sin(angle) * outer_radius
+        )
+        corners.append(corner)
+    return corners    
     
 func update_cells_meshes(hex_cells: Array[HexCell]) -> void:
     var valid_cells: Array[HexCell] = []
@@ -194,12 +216,7 @@ func update_cells_meshes(hex_cells: Array[HexCell]) -> void:
             push_error("Invalid cell type in visual mesh generation: %s" % str(cell))
     
     
-    for cell in valid_cells:
-      
-      
-    
-      cell.mesh_instance.generate_mesh()
-      cell.update_visuals()
+    initialize_grid(valid_cells)
 
 ## Applies terrain/elevation data from generator
 func initialize_from_data(cell_data: Array[HexCell]):
@@ -267,7 +284,8 @@ func initialize_from_data(cell_data: Array[HexCell]):
     for cell in hex_grid.values():
         if cell is HexCell:
             grid_cells.append(cell)
-    update_cells_meshes(grid_cells)
+
+    initialize_grid(grid_cells)
     
     # Final validation
     var expected_cells = 1 + 6 * (grid_radius * (grid_radius + 1)) / 2
@@ -316,6 +334,82 @@ func _connect_cell_neighbors(cell: HexCell, mobility: int):
 
         astar_graphs[mobility].add_directional_connection(from_id, to_id, forward_cost)
         astar_graphs[mobility].add_directional_connection(to_id, from_id, reverse_cost)
+
+func build_texture_arrays():
+    # Collect all unique textures
+    var all_textures : Array[Texture2D]
+    var all_normals : Array[Texture2D]
+    
+    for cell in hex_grid.values():
+        var terrain = cell.terrain_data
+        if !terrain: continue
+        
+        # Register textures
+        if !terrain_index_map.has(terrain):
+            var textures = terrain.get_all_textures()
+            var normals = []
+            
+            # Verify texture consistency
+            for t in textures:
+                if t.get_size() != Vector2(1024, 1024):
+                    push_error("Texture size mismatch in %s" % terrain.resource_path)
+                    return false
+            
+            var base_idx = all_textures.size()
+            print("all textures size: ",all_textures.size())
+            all_textures.append_array(textures)
+            all_normals.resize(all_textures.size())
+            
+            # Store mapping
+            terrain_index_map[terrain] = {
+                "base_index": base_idx,
+                "count": textures.size()
+            }
+    
+    # Create texture arrays
+    if all_textures.size() > 0:
+        terrain_texture_array = create_texture_array(all_textures)
+        #terrain_normal_array = create_texture_array(all_normals)
+    
+    return true
+
+func create_texture_array(textures: Array[Texture2D]) -> Texture2DArray:
+    var valid_images: Array[Image] = []
+    
+    # Validate and collect images
+    for t in textures:
+        if !t:
+            push_error("Null texture in array, skipping")
+            continue
+            
+        var img := t.get_image()
+        if !img or img.is_empty():
+            push_error("Invalid image in texture: %s" % t.resource_path)
+            continue
+            
+        if valid_images.size() > 0:
+            # Verify consistent dimensions
+            if img.get_size() != valid_images[0].get_size():
+                push_error("Texture size mismatch in %s" % t.resource_path)
+                return null
+                
+        valid_images.append(img)
+    
+    if valid_images.is_empty():
+        push_error("No valid images for texture array")
+        return null
+    
+    # Create texture array from images
+    var arr := Texture2DArray.new()
+    var err := arr.create_from_images(valid_images)
+    if err != OK:
+        push_error("Failed to create texture array (code %d)" % err)
+        return null
+    
+    
+    
+    return arr
+
 
 #endregion
 

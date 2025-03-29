@@ -5,14 +5,11 @@
 [ext_resource type="Resource" uid="uid://dke44yycegc3m" path="res://Resources/TerrainData/TestTerrainData.tres" id="2_yfq0g"]
 [ext_resource type="ArrayMesh" uid="uid://cxeorvorwm8pv" path="res://Meshes/Hex.obj" id="3_kt0wj"]
 [ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="4_tufw7"]
-[ext_resource type="Shader" uid="uid://chrkioejmv071" path="res://Shaders/terrain_blend.gdshader" id="6_kf3ap"]
+[ext_resource type="Material" uid="uid://b3ittex1n1gjj" path="res://Materials/TerrainMaterials/Plains_material2.tres" id="6_1s0kv"]
+[ext_resource type="Texture2D" uid="uid://faul8bj3417c" path="res://Textures/Terrain/water.jpg" id="6_kf3ap"]
 [ext_resource type="PackedScene" uid="uid://c6g70vehc44w4" path="res://Prefabs/Terrain/HexCell.tscn" id="7_kt0wj"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_dr2y5"]
-render_priority = 0
-shader = ExtResource("6_kf3ap")
-shader_parameter/texture_scale = 1.0
-shader_parameter/blend_sharpness = 0.5
+[ext_resource type="Texture2D" uid="uid://b2jhe7xkmvcks" path="res://Textures/Terrain/copa de arbol.jpg" id="8_equ6m"]
+[ext_resource type="Texture2D" uid="uid://lx6iqyd2j6p" path="res://Textures/Terrain/stone.jpg" id="9_wykde"]
 
 [sub_resource type="Resource" id="Resource_1s0kv"]
 resource_name = "water"
@@ -32,20 +29,13 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
-terrain_texture = "grass"
 strategic_map_color = Color(0, 0, 0, 1)
-model = ExtResource("3_kt0wj")
-visual_material = SubResource("ShaderMaterial_dr2y5")
-material_variations = Array[Material]([])
+base_texture = ExtResource("6_kf3ap")
+texture_variations = Array[Texture2D]([])
+texture_scale = 0.1
 armor_damage_mod = 1.0
 crit_chance_mod = 1.0
 metadata/_custom_type_script = "uid://dinqmy7x47n0"
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_0clhf"]
-render_priority = 0
-shader = ExtResource("6_kf3ap")
-shader_parameter/texture_scale = 1.0
-shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_tufw7"]
 resource_name = "forest"
@@ -65,20 +55,13 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
-terrain_texture = "grass"
 strategic_map_color = Color(0, 0, 0, 1)
-model = ExtResource("3_kt0wj")
-visual_material = SubResource("ShaderMaterial_0clhf")
-material_variations = Array[Material]([])
+base_texture = ExtResource("8_equ6m")
+texture_variations = Array[Texture2D]([])
+texture_scale = 0.1
 armor_damage_mod = 1.0
 crit_chance_mod = 1.0
 metadata/_custom_type_script = "uid://dinqmy7x47n0"
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_eq4dy"]
-render_priority = 0
-shader = ExtResource("6_kf3ap")
-shader_parameter/texture_scale = 1.0
-shader_parameter/blend_sharpness = 0.5
 
 [sub_resource type="Resource" id="Resource_equ6m"]
 resource_name = "mountain"
@@ -98,11 +81,10 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
-terrain_texture = "grass"
 strategic_map_color = Color(0, 0, 0, 1)
-model = ExtResource("3_kt0wj")
-visual_material = SubResource("ShaderMaterial_eq4dy")
-material_variations = Array[Material]([])
+base_texture = ExtResource("9_wykde")
+texture_variations = Array[Texture2D]([])
+texture_scale = 0.1
 armor_damage_mod = 1.0
 crit_chance_mod = 1.0
 metadata/_custom_type_script = "uid://dinqmy7x47n0"
@@ -117,6 +99,7 @@ hex_cell_scene = ExtResource("7_kt0wj")
 metadata/_custom_type_script = "uid://cnv3e3qbn8n70"
 
 [node name="TerrainMesh" type="MeshInstance3D" parent="HexGridManager"]
+material_override = ExtResource("6_1s0kv")
 skeleton = NodePath("../..")
 
 [node name="Camera3D" type="Camera3D" parent="."]
@@ -133,8 +116,8 @@ script = ExtResource("2_iupxn")
 grid_radius = 2
 terrain_types = Array[ExtResource("4_tufw7")]([SubResource("Resource_1s0kv"), ExtResource("2_yfq0g"), SubResource("Resource_tufw7"), SubResource("Resource_equ6m")])
 generate_on_start = true
-draw_debug = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 visible = false
+material_override = ExtResource("6_1s0kv")
 mesh = ExtResource("3_kt0wj")

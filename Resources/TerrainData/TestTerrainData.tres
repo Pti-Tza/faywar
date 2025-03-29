@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="TerrainData" load_steps=4 format=3 uid="uid://dke44yycegc3m"]
+[gd_resource type="Resource" script_class="TerrainData" load_steps=3 format=3 uid="uid://dke44yycegc3m"]
 
-[ext_resource type="ArrayMesh" uid="uid://cxeorvorwm8pv" path="res://Meshes/Hex.obj" id="1_ydjr3"]
+[ext_resource type="Texture2D" uid="uid://djhpnbj8ny1qb" path="res://Textures/Terrain/hand_painted_grass.png" id="1_3p5l5"]
 [ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="3_1c0s8"]
-[ext_resource type="Material" uid="uid://b3ittex1n1gjj" path="res://Materials/TerrainMaterials/Plains_material2.tres" id="3_ydjr3"]
 
 [resource]
 resource_name = "plains"
@@ -22,11 +21,10 @@ flammable = false
 crumble = false
 min_depth = 0
 max_depth = 0
-terrain_texture = "grass"
 strategic_map_color = Color(0, 1, 0, 1)
-model = ExtResource("1_ydjr3")
-visual_material = ExtResource("3_ydjr3")
-material_variations = Array[Material]([])
+base_texture = ExtResource("1_3p5l5")
+texture_variations = Array[Texture2D]([])
+texture_scale = 0.1
 armor_damage_mod = 1.0
 crit_chance_mod = 1.0
 metadata/_custom_type_script = "uid://dinqmy7x47n0"
