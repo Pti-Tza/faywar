@@ -111,7 +111,7 @@ func generate_terrain(q: int, r: int, s: int) -> TerrainData:
 		return get_terrain_by_name("mountain")
 
 func generate_elevation(q: int, r: int, s: int) -> float:
-	var elevation_noise = noise.get_noise_3d(q, r, s)
+	var elevation_noise = noise.get_noise_2d(q, r)
 	print("noise ", elevation_noise)
 	var normalized = (elevation_noise + 1.0) / 2.0  # Convert to 0-1 range
 	#var normalized = 1.0
@@ -157,14 +157,14 @@ func _test_generate_map():
 	print("Terrain Distribution:")
 	for terrain in terrain_counts:
 		print("- %s: %d" % [terrain, terrain_counts[terrain]])
-	
+	HexGridManager.instance.noise = noise
 	HexGridManager.instance.initialize_from_data(cells)
 	# Visual debug
 	if draw_debug:
 		_debug_draw_map(cells)
 
 
-func _debug_draw_map(cells: Array[HexCell]):
+func _debug_draw_map(cells: Array[HexCell],offset: Vector3 = Vector3.ZERO):
 	if cells.is_empty():
 		push_warning("Nothing to draw - empty cell array")
 		return
@@ -189,12 +189,12 @@ func _debug_draw_map(cells: Array[HexCell]):
 		var terrain_name = terrain_key.to_lower()
 		if terrain_groups.has(terrain_name):
 			var color = debug_colors[terrain_key]
-			_draw_terrain_surface(im, terrain_groups[terrain_name], color, hex_grid)
+			_draw_terrain_surface(im, terrain_groups[terrain_name], color, hex_grid,offset)
 			terrain_groups.erase(terrain_name)
 
 	# Draw remaining terrains with default color
 	for terrain_name in terrain_groups:
-		_draw_terrain_surface(im, terrain_groups[terrain_name], default_color, hex_grid)
+		_draw_terrain_surface(im, terrain_groups[terrain_name], default_color, hex_grid,offset)
 
 	if im.get_surface_count() > 0:
 		var mesh_instance = MeshInstance3D.new()
@@ -203,7 +203,7 @@ func _debug_draw_map(cells: Array[HexCell]):
 	else:
 		im.free()
 
-func _draw_terrain_surface(im: ImmediateMesh, cells: Array, color: Color, hex_grid: HexGridManager):
+func _draw_terrain_surface(im: ImmediateMesh, cells: Array, color: Color, hex_grid: HexGridManager,offset: Vector3 = Vector3.ZERO):
 	if cells.is_empty():
 		return
 
@@ -215,7 +215,7 @@ func _draw_terrain_surface(im: ImmediateMesh, cells: Array, color: Color, hex_gr
 	
 	# Battletech-standard hex visualization
 	for cell in cells:
-		var center = hex_grid.axial_to_world(cell.q, cell.r)
+		var center = hex_grid.axial_to_world(cell.q, cell.r) - offset
 		var elevation = cell.elevation * HexGridManager.instance.elevation_step
 		
 		for i in 6:

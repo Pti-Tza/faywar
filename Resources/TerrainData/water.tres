@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="TerrainData" load_steps=3 format=3 uid="uid://csts55xg4das0"]
+
+[ext_resource type="Texture2D" uid="uid://faul8bj3417c" path="res://Textures/Terrain/water.jpg" id="1_1qsir"]
+[ext_resource type="Script" uid="uid://dinqmy7x47n0" path="res://Scripts/HexMap/TerrainData.gd" id="2_rjd2i"]
+
+[resource]
+resource_name = "water"
+script = ExtResource("2_rjd2i")
+name = "water"
+map_symbol = "T"
+foot_movement = 1
+wheeled_movement = 2
+tracked_movement = 3
+hover_movement = 1
+vtol_movement = 1
+defense_bonus = 0
+stealth_modifier = 0
+heat_modifier = 0
+blocks_los = false
+flammable = false
+crumble = false
+min_depth = 0
+max_depth = 0
+strategic_map_color = Color(0, 0, 0, 1)
+base_texture = ExtResource("1_1qsir")
+texture_variations = Array[Texture2D]([])
+texture_scale = 0.1
+armor_damage_mod = 1.0
+crit_chance_mod = 1.0
+metadata/_custom_type_script = "uid://dinqmy7x47n0"

@@ -25,44 +25,44 @@ void fragment() {
     // Convert normalized values to 0-255 indices
     int albedo_index = int(texture_indices.x * 255.0);
     int normal_index = int(texture_indices.y * 255.0);
-    
+
     // Calculate world position and normal
     vec3 world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
     vec3 world_normal = normalize(NORMAL * mat3(MODEL_MATRIX));
-    
+
     // Triplanar blending weights
     vec3 blending = triplanar_blend(world_normal);
-    
+
     // Create proper UV coordinates with float casting
     vec3 uv_x = vec3(
-        world_pos.zy * texture_scale, 
+        world_pos.zy * texture_scale,
         float(albedo_index)
     );
     vec3 uv_y = vec3(
-        world_pos.xz * texture_scale, 
+        world_pos.xz * texture_scale,
         float(albedo_index)
     );
     vec3 uv_z = vec3(
-        world_pos.xy * texture_scale, 
+        world_pos.xy * texture_scale,
         float(albedo_index)
     );
-    
+
     // Sample textures using decoded indices
-    vec4 albedo = 
+    vec4 albedo =
         texture(albedo_array, uv_x) * blending.x +
         texture(albedo_array, uv_y) * blending.y +
         texture(albedo_array, uv_z) * blending.z;
-    
+
     // Sample normal maps
-    vec3 normal = 
+    vec3 normal =
         texture(normal_array, uv_x).rgb * blending.x +
         texture(normal_array, uv_y).rgb * blending.y +
         texture(normal_array, uv_z).rgb * blending.z;
-    
+
     // Process normal maps
     normal = normalize(normal * 2.0 - 1.0);
     normal.xy *= normal_strength;
-    
+
     // Set material properties
     ALBEDO = albedo.rgb;
     NORMAL_MAP = normal;

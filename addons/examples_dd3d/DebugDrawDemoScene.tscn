@@ -1,11 +1,11 @@
 [gd_scene load_steps=39 format=3 uid="uid://c3sccy6x0ht5j"]
 
-[ext_resource type="Script" uid="uid://qtec8imk4wbb" path="res://examples_dd3d/DebugDrawDemoScene.gd" id="1"]
-[ext_resource type="FontFile" uid="uid://erdgllynwqkw" path="res://examples_dd3d/Roboto-Bold.ttf" id="2_aedbq"]
-[ext_resource type="Script" uid="uid://cg3qug4d84c5d" path="res://examples_dd3d/demo_camera_movement.gd" id="3_3m1mp"]
-[ext_resource type="Script" uid="uid://ckc7c5tunnysr" path="res://examples_dd3d/demo_music_visualizer.gd" id="4_eq2lt"]
-[ext_resource type="Script" uid="uid://kxdrjatja3p4" path="res://examples_dd3d/demo_settings_panel.gd" id="5_31v5h"]
-[ext_resource type="Script" uid="uid://b6j1ltxo4j1ll" path="res://examples_dd3d/demo_web_docs_version_select.gd" id="6_07f7q"]
+[ext_resource type="Script" uid="uid://qtec8imk4wbb" path="res://addons/examples_dd3d/DebugDrawDemoScene.gd" id="1"]
+[ext_resource type="FontFile" uid="uid://erdgllynwqkw" path="res://addons/examples_dd3d/Roboto-Bold.ttf" id="2_aedbq"]
+[ext_resource type="Script" uid="uid://cg3qug4d84c5d" path="res://addons/examples_dd3d/demo_camera_movement.gd" id="3_3m1mp"]
+[ext_resource type="Script" uid="uid://ckc7c5tunnysr" path="res://addons/examples_dd3d/demo_music_visualizer.gd" id="4_eq2lt"]
+[ext_resource type="Script" uid="uid://kxdrjatja3p4" path="res://addons/examples_dd3d/demo_settings_panel.gd" id="5_31v5h"]
+[ext_resource type="Script" uid="uid://b6j1ltxo4j1ll" path="res://addons/examples_dd3d/demo_web_docs_version_select.gd" id="6_07f7q"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_87638"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
