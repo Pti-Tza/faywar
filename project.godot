@@ -15,6 +15,10 @@ run/main_scene="uid://ctmy4n1gfwi0j"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/terrain_3d/plugin.cfg")
+
 [setting]
 
 DiceRoller_enable_history=true
