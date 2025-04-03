@@ -19,8 +19,10 @@ var grid_radius: int = 0
 var cells: Array[HexCell] = []
 var terrain_size 
 func _ready() -> void:
-	await get_tree().process_frame
+	
 	if gen_on_start:
+
+		await get_tree().process_frame
 		generate_grid()
 
 func generate_grid():
@@ -33,25 +35,25 @@ func generate_grid():
 	var hex_vertical_spacing = cell_size * 1.5
 	
 	var hex_width = cell_size * sqrt(3)
-	var hex_height = cell_size * 2.0
+	var hex_height = cell_size * 1.5
 	
 
 	var offset :Vector3
 	if auto_size:
 		offset = Vector3(terrain_size.x/2 - hex_width/2 ,0, terrain_size.z/2 - hex_height/2 )
 	else:
-		offset = Vector3(grid_width * (hex_width/2),0, grid_height * (hex_height/2) )
+		offset = Vector3(grid_width * hex_width/2,0, grid_height * hex_height/2 )
 			
 	for row in grid_height:
 		for col in grid_width:
-			await get_tree().process_frame
+			
 			# Offset coordinates for rectangle layout
 			var q = col - (row >> 1)  # Offset-q axial coordinate
 			var r = row
 			
 			var world_pos = axial_to_world(q, r) 
 			world_pos = world_pos-offset
-			var elevation = sample_terrain_height(world_pos)
+			var elevation = await sample_terrain_height(world_pos)
 			
 			var cell = HexCell.new(q,r,elevation)
 			cell.initialize(q, r, elevation)
@@ -105,8 +107,25 @@ func axial_to_world(q: int, r: int) -> Vector3:
 func sample_terrain_height(pos: Vector3) -> float:
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(
-		pos + Vector3.UP * 10000, 
-		pos + Vector3.DOWN * 100
+		pos + Vector3.UP * 1000+Vector3.RIGHT, 
+		pos + Vector3.DOWN * 1000+Vector3.FORWARD,
+		
 	)
+	query.hit_back_faces=true
+	query.hit_from_inside=true
+	query.collide_with_areas=true
 	var result = space_state.intersect_ray(query)
-	return result.position.y if result else 0.0
+	if result:
+		print(pos)
+		print(result.position)
+		print('-------')
+		return result.position.y
+	else:
+		
+		
+		return 0.0
+	#return  if result else 0.0
+
+
+func _on_terrain_3d_ready() -> void:
+	generate_grid()
