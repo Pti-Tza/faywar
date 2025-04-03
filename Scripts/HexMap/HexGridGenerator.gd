@@ -1,6 +1,11 @@
+
 extends Node3D
 class_name HexGridGenerator
-@export var terrain_mesh: MeshInstance3D
+
+
+var redraw_line_grid_button: Callable = generate_grid
+
+@export var terrain_mesh: Terrain3D
 @export var auto_size: bool = true
 @export var cell_size: float = 1.0
 @export var grid_padding: float = 2.0  # Extra cells beyond terrain edges
@@ -14,12 +19,14 @@ var grid_radius: int = 0
 var cells: Array[HexCell] = []
 var terrain_size 
 func _ready() -> void:
+	await get_tree().process_frame
 	if gen_on_start:
 		generate_grid()
 
 func generate_grid():
 	cells.clear()
-	_calculate_grid_dimensions()
+	if auto_size:
+		_calculate_grid_dimensions()
 	
 	# Hex layout calculations
 	var hex_horizontal_spacing = cell_size * sqrt(3)
@@ -28,10 +35,16 @@ func generate_grid():
 	var hex_width = cell_size * sqrt(3)
 	var hex_height = cell_size * 2.0
 	
-	var offsetx = grid_width/2 
-	var offset = Vector3(terrain_size.x/2 - hex_width/2 ,0, terrain_size.z/2 - hex_height )
+
+	var offset :Vector3
+	if auto_size:
+		offset = Vector3(terrain_size.x/2 - hex_width/2 ,0, terrain_size.z/2 - hex_height/2 )
+	else:
+		offset = Vector3(grid_width * (hex_width/2),0, grid_height * (hex_height/2) )
+			
 	for row in grid_height:
 		for col in grid_width:
+			await get_tree().process_frame
 			# Offset coordinates for rectangle layout
 			var q = col - (row >> 1)  # Offset-q axial coordinate
 			var r = row
@@ -92,8 +105,8 @@ func axial_to_world(q: int, r: int) -> Vector3:
 func sample_terrain_height(pos: Vector3) -> float:
 	var space_state = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(
-		pos + Vector3.UP * 1000, 
-		pos + Vector3.DOWN * 1000
+		pos + Vector3.UP * 10000, 
+		pos + Vector3.DOWN * 100
 	)
 	var result = space_state.intersect_ray(query)
 	return result.position.y if result else 0.0

@@ -111,12 +111,13 @@ func _init(axial_q: int, axial_r: int, e: float = 0) -> void:
 func initialize(q2: int, r2: int, e: float = 0) -> void:
 	axial_coords = Vector2i(q2, r2)
 	elevation = e
-	name = "HexCell(%d,%d)" % [q2, r2]
-	print(name+ " initialized")
+	name = "HexCell(%d,%d,%d)" % [q2, r2, e]
+	#print(name+ " initialized")
 	lab = Label3D.new()
-	lab.font_size = 500
+	lab.font_size = 800
 	lab.text = "(%d,%d,%d)" % [q2, r2,e]
 	lab.position =  Vector3(0,3,0)
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(lab)
 	
 ## Calculates movement cost for a unit type
