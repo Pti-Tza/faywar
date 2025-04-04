@@ -1,10 +1,14 @@
-
+@tool
 extends Node3D
 class_name HexGridGenerator
 
 
-var redraw_line_grid_button: Callable = generate_grid
+@export_tool_button("Generate grid") var redraw_line_grid_button: Callable = generate_grid
+@export_tool_button("Clear Child") var clear_button: Callable = clear_child
 
+@export var auto_gen: bool 
+
+@export var grid_manager: HexGridManager
 @export var terrain_mesh: Terrain3D
 @export var auto_size: bool = true
 @export var cell_size: float = 1.0
@@ -16,6 +20,17 @@ var grid_radius: int = 0
 @export var grid_height: int = 5
 @export var hex : HexMapGenerator
 @export var default_terrain_data: TerrainData
+@export var slope_terrain_data: TerrainData
+@export var terrain_datas: Array[TerrainData] = []
+@export var debug_mesh: MeshInstance3D
+
+@export var debug_colors: Dictionary = {
+	"water": Color.SKY_BLUE,
+	"plains": Color.LAWN_GREEN,
+	"forest": Color.FOREST_GREEN,
+	"mountain": Color.SADDLE_BROWN
+}
+
 var cells: Array[HexCell] = []
 var terrain_size 
 func _ready() -> void:
@@ -24,9 +39,14 @@ func _ready() -> void:
 
 		await get_tree().process_frame
 		generate_grid()
+func _process(delta: float) -> void:
+	if auto_gen:
+		await get_tree().process_frame
+		generate_grid()
 
 func generate_grid():
-	cells.clear()
+	clear_child() 
+	await get_tree().process_frame
 	if auto_size:
 		_calculate_grid_dimensions()
 	
@@ -55,15 +75,21 @@ func generate_grid():
 			world_pos = world_pos-offset
 			var elevation = await sample_terrain_height(world_pos)
 			
-			var cell = HexCell.new(q,r,elevation)
-			cell.initialize(q, r, elevation)
-			cell.terrain_data = default_terrain_data
+			var cell = HexCell.new(q,r,elevation,grid_manager)
+			
+			if terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x] and not terrain_mesh.data.get_control_auto(world_pos):
+				cell.terrain_data = terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x]
+			else:
+				cell.terrain_data = default_terrain_data
+				
+			if get_terrain_slope_angle(world_pos) > 40:
+				cell.terrain_data = slope_terrain_data	
 			cell.position = world_pos
 			cell.elevation= elevation
 			cells.append(cell)
 			add_child(cell)
 			
-	hex._debug_draw_map(cells,offset)
+	_debug_draw_map(cells,offset)
 	print("total cells ",cells.size())
 func _calculate_grid_dimensions():
 	if !terrain_mesh || !terrain_mesh.mesh:
@@ -114,18 +140,111 @@ func sample_terrain_height(pos: Vector3) -> float:
 	query.hit_back_faces=true
 	query.hit_from_inside=true
 	query.collide_with_areas=true
-	var result = space_state.intersect_ray(query)
-	if result:
-		print(pos)
-		print(result.position)
-		print('-------')
-		return result.position.y
+	#var result = space_state.intersect_ray(query)
+	var result = terrain_mesh.data.get_height(pos)
+	return result
+	#if result:
+		#print(pos)
+		#print(result.position)
+		#print('-------')
+		#return result.position.y
+	#else:
+		#
+		#
+		#return 0.0
+	##return  if result else 0.0
+func get_terrain_slope_angle(global_pos: Vector3) -> float:
+	# Get the terrain normal at this position
+	var normal: Vector3 = terrain_mesh.data.get_normal(global_pos)
+	
+	# Calculate angle between normal and vertical (up) direction
+	var angle_rad: float = normal.angle_to(Vector3.UP)
+	
+	# Convert to degrees for readability
+	var angle_deg: float = rad_to_deg(angle_rad)
+	
+	return angle_deg
+
+func _debug_draw_map(cells: Array[HexCell],offset: Vector3 = Vector3.ZERO):
+	debug_mesh.mesh = null
+	if cells.is_empty():
+		push_warning("Nothing to draw - empty cell array")
+		return
+
+	var im = ImmediateMesh.new()
+
+	var default_color = Color.GRAY
+	var terrain_groups = {}
+
+	# Battletech terrain grouping
+	for cell : HexCell in cells:
+		var terrain_name = "unknown"
+		if cell.terrain_data.name:
+			terrain_name = cell.terrain_data.name.to_lower()
+		
+		if not terrain_groups.has(terrain_name):
+			terrain_groups[terrain_name] = []
+		terrain_groups[terrain_name].append(cell)
+
+	# Draw known terrains first
+	for terrain_key in debug_colors:
+		var terrain_name = terrain_key.to_lower()
+		if terrain_groups.has(terrain_name):
+			var color = debug_colors[terrain_key]
+			_draw_terrain_surface(im, terrain_groups[terrain_name], color, grid_manager,offset)
+			terrain_groups.erase(terrain_name)
+
+	# Draw remaining terrains with default color
+	for terrain_name in terrain_groups:
+		_draw_terrain_surface(im, terrain_groups[terrain_name], default_color, grid_manager,offset)
+
+	if im.get_surface_count() > 0:
+		var mesh_instance = debug_mesh
+		mesh_instance.mesh = im
+		#add_child(mesh_instance)
 	else:
-		
-		
-		return 0.0
-	#return  if result else 0.0
+		im.mesh = null
 
+func _draw_terrain_surface(im: ImmediateMesh, cells: Array, color: Color, hex_grid: HexGridManager,offset: Vector3 = Vector3.ZERO):
+	if cells.is_empty():
+		return
 
-func _on_terrain_3d_ready() -> void:
-	generate_grid()
+	var mat = StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = color
+	
+	im.surface_begin(Mesh.PRIMITIVE_LINES, mat)
+	
+	# Battletech-standard hex visualization
+	for cell in cells:
+		var center = axial_to_world(cell.q, cell.r) - offset
+		var elevation = cell.elevation * grid_manager.elevation_step
+		
+		for i in 6:
+			var angle = deg_to_rad(60 * i + 30)  # Official BT rotation
+			var next_angle = deg_to_rad(60 * (i + 1) + 30)
+			var radius = grid_manager.outer_radius
+			
+			var point = center + Vector3(
+				radius * cos(angle),
+				elevation,
+				radius * sin(angle)
+			)
+			
+			var next_point = center + Vector3(
+				radius * cos(next_angle),
+				elevation,
+				radius * sin(next_angle)
+			)
+			
+			im.surface_add_vertex(point)
+			im.surface_add_vertex(next_point)
+	
+	im.surface_end()
+	
+func clear_child():
+	#debug_mesh.mesh = null
+	var children = get_children()
+	for child in children:
+		child.free()
+	cells.clear()
