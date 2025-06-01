@@ -26,7 +26,7 @@ var _global_position: Vector3:
 		var base_pos = HexGridManager.instance.axial_to_world(q, r)
 		return Vector3(
 			base_pos.x,
-			elevation * HexGridManager.instance.elevation_step,
+			elevation,
 			base_pos.z
 		)
 
@@ -44,7 +44,7 @@ var grid_manager: HexGridManager
 	set(value):
 		elevation = value
 		# Update vertical position using height step
-		position.y = elevation * grid_manager.elevation_step 
+		position.y = elevation 
 		# Notify systems of elevation change
 		elevation_changed.emit(elevation)
 

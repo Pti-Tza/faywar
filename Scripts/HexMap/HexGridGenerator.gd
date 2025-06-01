@@ -3,6 +3,9 @@ extends Node3D
 class_name HexGridGenerator
 
 
+#This script generates Hex terrain passability data using existing TerrainMesh Textures and slopes 
+
+
 @export_tool_button("Generate grid") var redraw_line_grid_button: Callable = generate_grid
 @export_tool_button("Clear Child") var clear_button: Callable = clear_child
 
@@ -90,6 +93,7 @@ func generate_grid():
 			add_child(cell)
 			
 	_debug_draw_map(cells,offset)
+	grid_manager.initialize_from_data(cells)
 	print("total cells ",cells.size())
 func _calculate_grid_dimensions():
 	if !terrain_mesh || !terrain_mesh.mesh:

@@ -80,8 +80,7 @@ const HEX_DIRECTIONS = [
 #region Core Grid Management
 func _ready() -> void:
 	print("HexGridManagerReady")
-	if create_empty_grid : 
-		generate_hex_grid(radius) 
+
 		
 
 	
@@ -106,173 +105,7 @@ func print_map_size():
 
 
 
-## Generates hexagonal grid with axial coordinates
-func generate_hex_grid(radius : int) -> void:
-	hex_grid.clear()
-	cells.clear()
-	# Generate concentric rings of hex cells
-	for q in range(-radius, radius + 1):
-		# Calculate valid r range for current q to maintain hexagonal shape
-		var r1 = max(-radius, -q - radius)
-		var r2 = min(radius, -q + radius)
-		
-		for r in range(r1, r2 + 1):
-			var cell = HexCell.new(q, r)
-			
-			cell.position = axial_to_world(q, r)  # Set position directly
-			add_child(cell)  # Add to scene tree FIRST
-			hex_grid[Vector2i(q, r)] = cell
-			cells.append(cell)
-			
-	print_map_size()		
-	#initialize_astar()		
-	update_cells_meshes(cells)		
-	grid_initialized.emit()
 
-func initialize_grid(cell_data: Array[HexCell]):
-	# Clear previous mesh if exists
-	var terrain_mesh = $TerrainMesh
-	if terrain_mesh:
-		terrain_mesh.queue_free()
-	
-	# Build texture arrays first
-	if !build_texture_arrays():
-		push_error("Failed to build texture arrays")
-		return
-	
-	# Create new mesh instance
-	var new_mesh = MeshInstance3D.new()
-	new_mesh.name = "TerrainMesh"
-	add_child(new_mesh)
-	
-	# Generate ACTUAL terrain mesh with elevation data
-	_generate_smooth_terrain_mesh(cell_data)
-	
-	# Set material parameters
-	var material = terrain_mesh.material_override
-	if !material:
-		material = StandardMaterial3D.new()
-		new_mesh.material_override = material
-	
-	#material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	material.set_shader_parameter("albedo_array", terrain_texture_array)
-	material.set_shader_parameter("normal_array", terrain_normal_array)
-
-func _generate_smooth_terrain_mesh(cell_data: Array[HexCell]):
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var vertex_map = {}
-	var vertex_count = 0
-	
-	# Generate smooth terrain from cell data
-	for cell in cell_data:
-		var center_pos = cell.position
-		center_pos.y = cell.elevation * elevation_step
-		
-		# Generate elevated corners
-		var corners = []
-		for i in 6:
-			var angle = deg_to_rad(60 * i + 30)
-			var dir = Vector3(cos(angle), 0, sin(angle))
-			var corner_pos = center_pos + dir * outer_radius
-			corner_pos.y = cell.elevation * elevation_step
-			corners.append(corner_pos)
-		
-		# Create subdivided edges
-		var ring_vertices = []
-		for i in 6:
-			var next_i = (i + 1) % 6
-			var edge_points = []
-			for j in divisions + 1:
-				var t = j / float(divisions)
-				var pos = corners[i].lerp(corners[next_i], t)
-				edge_points.append(pos)
-			
-			if i == 0:
-				ring_vertices.append_array(edge_points)
-			else:
-				ring_vertices.append_array(edge_points.slice(1))
-		
-		# Add vertices and indices
-		var center_idx = _add_vertex(st, vertex_map, center_pos, vertex_count)
-		var ring_indices = []
-		for pos in ring_vertices:
-			ring_indices.append(_add_vertex(st, vertex_map, pos, vertex_count))
-		
-		# Create triangles
-		for i in ring_indices.size():
-			var j = (i + 1) % ring_indices.size()
-			st.add_index(center_idx)
-			st.add_index(ring_indices[i])
-			st.add_index(ring_indices[j])
-	
-	# Finalize and assign mesh
-	st.generate_normals()
-	st.generate_tangents()
-	$TerrainMesh.mesh = st.commit()
-
-func _generate_smooth_corners(center: Vector3) -> Array:
-	var corners = []
-	for i in 6:
-		var angle = deg_to_rad(60 * i + 30)
-		var offset = Vector3(
-			cos(angle) * outer_radius,
-			0,
-			sin(angle) * outer_radius
-		)
-		var pos = center + offset
-		pos.y = _sample_terrain_height(pos)
-		corners.append(pos)
-	return corners
-
-func subdivide_edge(a: Vector3, b: Vector3, divisions: int) -> Array:
-	var points = []
-	for i in divisions + 1:
-		var t = i / float(divisions)
-		var pos = a.lerp(b, t)
-		pos.y = _sample_terrain_height(pos)
-		points.append(pos)
-	return points
-
-func _sample_terrain_height(pos: Vector3) -> float:
-	# Sample noise with octaves for natural variation
-	var height = noise.get_noise_2d(pos.x * noise_scale, pos.z * noise_scale)
-	return height * height_multiplier
-
-func _add_vertex(st: SurfaceTool, vertex_map: Dictionary, pos: Vector3, count: int) -> int:
-	var key = "%.4f,%.4f,%.4f" % [
-		snapped(pos.x, 0.0001), 
-		snapped(pos.y, 0.0001), 
-		snapped(pos.z, 0.0001)
-	]
-	
-	if vertex_map.has(key):
-		return vertex_map[key]
-	
-	# Set UVs based on world position
-	var uv = Vector2(
-		pos.x / (radius * outer_radius * 2) + 0.5,
-		pos.z / (radius * outer_radius * 2) + 0.5
-	)
-	st.set_uv(uv)
-	st.add_vertex(pos)
-	
-	vertex_map[key] = count
-	return count
-	
-func update_cells_meshes(hex_cells: Array[HexCell]) -> void:
-	var valid_cells: Array[HexCell] = []
-	
-	# 2. Type validation and filtering
-	for cell in hex_cells:
-		if cell is HexCell:
-			valid_cells.append(cell)
-		else:
-			push_error("Invalid cell type in visual mesh generation: %s" % str(cell))
-	
-	
-	initialize_grid(valid_cells)
 
 ## Applies terrain/elevation data from generator
 func initialize_from_data(cell_data: Array[HexCell]):
@@ -318,10 +151,10 @@ func initialize_from_data(cell_data: Array[HexCell]):
 		cell.elevation = elevation
 		# Debug output
 		if OS.is_debug_build():
-			print("Initialized cell %s: %s (Elevation: %d)" % [
+			print("Initialized cell %s: %s (Elevation: %d) position %s" % [
 				coords,
 				cell.terrain_data.name if cell.terrain_data else "Missing Terrain",
-				cell.elevation
+				cell.elevation, cell._global_position
 			])
 
 	# Post-initialization checks
@@ -341,8 +174,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
 		if cell is HexCell:
 			grid_cells.append(cell)
 
-	initialize_grid(grid_cells)
-	
+
 	# Final validation
 	var expected_cells = 1 + 6 * (radius * (radius + 1)) / 2
 	if hex_grid.size() != expected_cells:
@@ -390,81 +222,6 @@ func _connect_cell_neighbors(cell: HexCell, mobility: int):
 
 		astar_graphs[mobility].add_directional_connection(from_id, to_id, forward_cost)
 		astar_graphs[mobility].add_directional_connection(to_id, from_id, reverse_cost)
-
-func build_texture_arrays():
-	# Collect all unique textures
-	var all_textures : Array[Texture2D]
-	var all_normals : Array[Texture2D]
-	
-	for cell in hex_grid.values():
-		var terrain = cell.terrain_data
-		if !terrain: continue
-		
-		# Register textures
-		if !terrain_index_map.has(terrain):
-			var textures = terrain.get_all_textures()
-			var normals = []
-			
-			# Verify texture consistency
-			for t in textures:
-				if t.get_size() != Vector2(1024, 1024):
-					push_error("Texture size mismatch in %s" % terrain.resource_path)
-					return false
-			
-			var base_idx = all_textures.size()
-			print("all textures size: ",all_textures.size())
-			all_textures.append_array(textures)
-			all_normals.resize(all_textures.size())
-			
-			# Store mapping
-			terrain_index_map[terrain] = {
-				"base_index": base_idx,
-				"count": textures.size()
-			}
-	
-	# Create texture arrays
-	if all_textures.size() > 0:
-		terrain_texture_array = create_texture_array(all_textures)
-		#terrain_normal_array = create_texture_array(all_normals)
-	
-	return true
-
-func create_texture_array(textures: Array[Texture2D]) -> Texture2DArray:
-	var valid_images: Array[Image] = []
-	
-	# Validate and collect images
-	for t in textures:
-		if !t:
-			push_error("Null texture in array, skipping")
-			continue
-			
-		var img := t.get_image()
-		if !img or img.is_empty():
-			push_error("Invalid image in texture: %s" % t.resource_path)
-			continue
-			
-		if valid_images.size() > 0:
-			# Verify consistent dimensions
-			if img.get_size() != valid_images[0].get_size():
-				push_error("Texture size mismatch in %s" % t.resource_path)
-				return null
-				
-		valid_images.append(img)
-	
-	if valid_images.is_empty():
-		push_error("No valid images for texture array")
-		return null
-	
-	# Create texture array from images
-	var arr := Texture2DArray.new()
-	var err := arr.create_from_images(valid_images)
-	if err != OK:
-		push_error("Failed to create texture array (code %d)" % err)
-		return null
-	
-	
-	
-	return arr
 
 
 #endregion
@@ -691,6 +448,11 @@ func get_hex_distance(start_hex: Vector2i, end_hex: Vector2i) -> float:
 func get_cell(q: int, r: int) -> HexCell:
 	return hex_grid.get(Vector2i(q, r), null)
 
+func get_cell_at_position(pos: Vector3) -> HexCell:
+	var axial : Vector2i  = world_to_axial(pos)
+	
+	return get_cell(axial.x, axial.y)
+
 ## Gets all valid neighboring cells for given coordinates
 func get_neighbors(q: int, r: int) -> Array[HexCell]:
 	var neighbors : Array[HexCell]
@@ -708,7 +470,7 @@ func get_neighbor(q: int, r: int, direction: int) -> HexCell:
 
 ## Gets all cells within specified hexagonal distance
 func get_cells_in_range(center: Vector2i, rang: int) -> Array[HexCell]:
-	var results = []
+	var results : Array[HexCell]
 	for q in range(-rang, rang + 1):
 		var r_start = max(-rang, -q - rang)
 		var r_end = min(rang, -q + rang)
@@ -716,7 +478,7 @@ func get_cells_in_range(center: Vector2i, rang: int) -> Array[HexCell]:
 		for r in range(r_start, r_end + 1):
 			var s = -q - r
 			var distance = (abs(q) + abs(r) + abs(s)) / 2
-			if distance <= range:
+			if distance <= rang:
 				var coord = Vector2i(center.x + q, center.y + r)
 				if hex_grid.has(coord):
 					results.append(hex_grid[coord])
