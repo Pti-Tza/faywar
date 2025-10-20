@@ -32,7 +32,6 @@ signal movement_executed(unit: UnitHandler, path: Array[HexCell])
 @export_category("Subsystems")
 ## Initiative tracking and turn order management
 @export var initiative_system: InitiativeSystem
-@export var initiative_data: InitiativeData
 ## Tactical battlefield grid and pathfinding
 @export var grid_map: HexGridManager
 ## Unit spawning and lifecycle management
@@ -61,8 +60,8 @@ func _init() -> void:
     instance=self
 
 #region Turn Handle
-func _ready() -> void:
-    initiative_system.initialize(initiative_data)
+#func _ready() -> void:
+   # initiative_system.initialize(initiative_data)
 
 func start_combat_round() -> void:
     initiative_system.reset_round()

@@ -16,37 +16,37 @@ Key Features:
 
 ### Enums ###
 enum ExecutionType {
-    INSTANT,    # Event executes immediately upon trigger
-    TIMED,      # Event executes after a delay
-    RECURRING   # Event executes repeatedly at fixed intervals
+	INSTANT,    # Event executes immediately upon trigger
+	TIMED,      # Event executes after a delay
+	RECURRING   # Event executes repeatedly at fixed intervals
 }
 
 ### Exported Properties ###
 @export var execution_type: ExecutionType = ExecutionType.INSTANT
-    # The type of event execution strategy to use
+	# The type of event execution strategy to use
 
 @export var delay: float = 0.0
-    # Delay in seconds before executing timed events (ignored for other types)
+	# Delay in seconds before executing timed events (ignored for other types)
 
 @export var repeat_interval: float = 0.0
-    # Interval in seconds between recurring executions (ignored for other types)
+	# Interval in seconds between recurring executions (ignored for other types)
 
 @export var priority: int = 1
-    # Determines execution order (lower numbers executed first)
+	# Determines execution order (lower numbers executed first)
 
 ### Internal State ###
 var _timer: Timer = null
-    # Internal timer used for timed/recurring events
+	# Internal timer used for timed/recurring events
 
 var _is_active: bool = false
-    # Tracks whether the event is currently executing
+	# Tracks whether the event is currently executing
 
 ### Signals ###
 signal event_activated
-    # Emitted when event execution begins
+	# Emitted when event execution begins
 
 signal event_ended
-    # Emitted when event execution completes or is interrupted
+	# Emitted when event execution completes or is interrupted
 
 ### Public API ###
 '''
@@ -55,17 +55,17 @@ signal event_ended
 @note Validates state before starting new executions
 '''
 func execute() -> void:
-    if _is_active:
-        push_warning("Event already active: %s" % name)
-        return
+	if _is_active:
+		push_warning("Event already active: %s" % name)
+		return
 
-    match execution_type:
-        ExecutionType.INSTANT:
-            _start_instant()
-        ExecutionType.TIMED:
-            _start_timed()
-        ExecutionType.RECURRING:
-            _start_recurring()
+	match execution_type:
+		ExecutionType.INSTANT:
+			_start_instant()
+		ExecutionType.TIMED:
+			_start_timed()
+		ExecutionType.RECURRING:
+			_start_recurring()
 
 '''
 @func stop
@@ -73,12 +73,12 @@ func execute() -> void:
 @description Stops timers and signals completion
 '''
 func stop() -> void:
-    if _timer:
-        _timer.stop()
-        _timer.queue_free()
-        _timer = null
-    _is_active = false
-    emit_signal("event_ended")
+	if _timer:
+		_timer.stop()
+		_timer.queue_free()
+		_timer = null
+	_is_active = false
+	emit_signal("event_ended")
 
 ### Execution Logic ###
 '''
@@ -87,8 +87,8 @@ func stop() -> void:
 @description Calls _execute() immediately then stops the event
 '''
 func _start_instant() -> void:
-    _execute()
-    stop()
+	_execute()
+	stop()
 
 '''
 @func _start_timed
@@ -96,13 +96,13 @@ func _start_instant() -> void:
 @description Creates a one-shot timer with the configured delay
 '''
 func _start_timed() -> void:
-    _timer = Timer.new()
-    _timer.wait_time = delay
-    _timer.one_shot = true
-    _timer.timeout.connect(_execute_wrapper)
-    add_child(_timer)
-    _timer.start()
-    _is_active = true
+	_timer = Timer.new()
+	_timer.wait_time = delay
+	_timer.one_shot = true
+	_timer.timeout.connect(_execute_wrapper)
+	add_child(_timer)
+	_timer.start()
+	_is_active = true
 
 '''
 @func _start_recurring
@@ -110,13 +110,13 @@ func _start_timed() -> void:
 @description Creates a repeating timer with the configured interval
 '''
 func _start_recurring() -> void:
-    _timer = Timer.new()
-    _timer.wait_time = repeat_interval
-    _timer.one_shot = false
-    _timer.timeout.connect(_execute_wrapper)
-    add_child(_timer)
-    _timer.start()
-    _is_active = true
+	_timer = Timer.new()
+	_timer.wait_time = repeat_interval
+	_timer.one_shot = false
+	_timer.timeout.connect(_execute_wrapper)
+	add_child(_timer)
+	_timer.start()
+	_is_active = true
 
 '''
 @func _execute_wrapper
@@ -124,8 +124,8 @@ func _start_recurring() -> void:
 @description Ensures signals are emitted properly
 '''
 func _execute_wrapper() -> void:
-    _execute()
-    emit_signal("event_activated")
+	_execute()
+	emit_signal("event_activated")
 
 '''
 @func _execute
@@ -134,7 +134,7 @@ func _execute_wrapper() -> void:
 @note Contains error enforcement to prevent misuse
 '''
 func _execute() -> void:
-    push_error("Implement _execute() in derived class")
+	push_error("Implement _execute() in derived class")
 
 ### Lifecycle ###
 
@@ -149,9 +149,9 @@ func _execute() -> void:
 '''
 
 func _exit_tree() -> void:
-    # Cleanup resources
-    if _timer:
-        _timer.stop()
-        _timer = null
-    # Call Node's _exit_tree()
-    #super()
+	# Cleanup resources
+	if _timer:
+		_timer.stop()
+		_timer = null
+	# Call Node's _exit_tree()
+	#super()

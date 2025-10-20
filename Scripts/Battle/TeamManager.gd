@@ -9,17 +9,17 @@ static var instance: TeamManager
 var _team_relationships := {}
 
 func _init():
-    instance = self
+	instance = self
 
 func initialize(scenario: MissionScenario):
-    # Load relationships from mission setup
-    _team_relationships = scenario.team_relationships.duplicate()
+	# Load relationships from mission setup
+	_team_relationships = scenario.team_relationships.duplicate()
 
 func are_allies(team_a: int, team_b: int) -> bool:
-    return team_a == team_b || _team_relationships[team_a].allies.has(team_b)
+	return team_a == team_b || _team_relationships[team_a].allies.has(team_b)
 
 func are_enemies(team_a: int, team_b: int) -> bool:
-    return _team_relationships[team_a].enemies.has(team_b)
+	return _team_relationships[team_a].enemies.has(team_b)
 
 func get_hostile_teams(for_team: int) -> Array[int]:
-    return _team_relationships[for_team].enemies
+	return _team_relationships[for_team].enemies
