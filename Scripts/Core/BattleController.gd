@@ -43,17 +43,15 @@ signal movement_executed(unit: UnitHandler, path: Array[HexCell])
 @export_category("Combat Rules")
 ## Maximum number of rounds before automatic timeout
 @export var max_turns: int = 20
-## AI Controller class
-@export var ai_controller_class: AIController
-## Player Controller class
-@export var player_controller_class: PlayerController
+##  Controllers
+@export var controllers: Array[BaseController]
+
 #endregion
 
 #region Private Variables
 var _current_turn: int = 0            # Current round number
 var _active_unit: UnitHandler = null   # Unit currently taking action
 var _combat_log: Array[String] = []   # Record of significant combat events
-var _controllers: Dictionary = {}     # {unit_uuid: controller}
 #endregion
 
 func _init() -> void:
@@ -108,7 +106,6 @@ func exit_state() -> Dictionary:
     _combat_log.clear()
     _current_turn = 0
     initiative_system.clear()
-    _cleanup_controllers()
     
     return transition_data
 
@@ -182,19 +179,13 @@ func _start_unit_turn(unit: UnitHandler) -> void:
     turn_phase_changed.emit("UNIT_TURN_START")
     
     # Create and assign controller based on unit team
-    var controller_class = player_controller_class if unit.team == 0 else ai_controller_class
-    var controller = controller_class.new()
-    controller.begin_turn(unit)
-    
-    # Connect signals
-    controller.turn_ended.connect(_on_unit_turn_ended)
-    controller.action_selected.connect(_on_controller_action)
+    for controller in controllers:
+     if controller.team_index == unit.team : controller.begin_turn(unit)   
+     # Connect signals
+     controller.turn_ended.connect(_on_unit_turn_ended)
+     controller.action_selected.connect(_on_controller_action)
 
-    # Store controller in dictionary
-    _controllers[unit.uuid] = controller
-    
-    # Add controller to scene tree
-    add_child(controller)
+
 
 ## Handle end of combat round and check turn limits
 func _end_combat_round() -> void:
@@ -217,6 +208,7 @@ func _on_unit_turn_ended(controller: BaseController):
     # Disconnect signal handler
     if is_instance_valid(controller):
         controller.disconnect("turn_ended", _on_unit_turn_ended)
+        controller.disconnect("action_selected", _on_controller_action)
     # Progress to next unit
     _process_next_unit()
 
@@ -322,9 +314,5 @@ func _on_mission_failed(reason: String) -> void:
     print("Mission failed due to: %s" % reason)
     defeat_occurred.emit()
 
-## Cleanup controllers at the end of combat
-func _cleanup_controllers() -> void:
-    for controller in _controllers.values():
-        controller.queue_free()
-    _controllers.clear()
+
 #endregion

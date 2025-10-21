@@ -6,54 +6,51 @@ static var instance: AttackSystem
 
 signal attack_resolved(attacker: UnitHandler, target: UnitHandler, result: AttackResult)
 
-const CRITICAL_THRESHOLD = 8
-const SIDE_ANGLE = 60  # Degrees for side arc determination
+@export var hex_grid: HexGridManager
+@export var line_of_sight: LineOfSight
 
+# Pre-instantiated, reusable handlers
+var _standard_handler: StandardAttackHandler
+var _cluster_handler: ClusterAttackHandler
 
-
-@export var hex_grid : HexGridManager
-@export var line_of_sight : LineOfSight 
-
-### CONSTANTS ###
-const CRITICAL_DMG_MULTIPLIER = 2.0
-
-### INITIALIZATION ###
-func _init() :
- instance= self
+func _init():
+	instance = self
 
 func _ready():
-    assert(hex_grid != null, "HexGridManager must be assigned")
-    assert(line_of_sight != null, "LineOfSight must be assigned")
-
+	assert(hex_grid != null, "HexGridManager must be assigned")
+	assert(line_of_sight != null, "LineOfSight must be assigned")
+	
+	# Initialize handlers once
+	_standard_handler = StandardAttackHandler.new(hex_grid, line_of_sight)
+	_cluster_handler = ClusterAttackHandler.new(hex_grid, line_of_sight)
 
 func resolve_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> void:
-    var result = AttackResult.new()
-    
-    if !_validate_attack(attacker, target, weapon):
-        result.valid = false
-        attack_resolved.emit(attacker, target, result)
-        return
+	var result = AttackResult.new()
+	
+	if !_validate_attack(attacker, target, weapon):
+		result.valid = false
+		attack_resolved.emit(attacker, target, result)
+		return
 
-    var handler = _get_attack_handler(weapon)
-    result = handler.resolve_attack(attacker, target, weapon)
-    
-    attack_resolved.emit(attacker, target, result)
+	var handler = _get_attack_handler(weapon)
+	result = handler.resolve_attack(attacker, target, weapon)
+	
+	attack_resolved.emit(attacker, target, result)
 
 func _get_attack_handler(weapon: WeaponData) -> AttackHandler:
-    if weapon.attack_pattern==WeaponData.AttackPattern.CLUSTER:
-            return ClusterAttackHandler.new(hex_grid, line_of_sight)   
-    else:              
-            return StandardAttackHandler.new(hex_grid, line_of_sight)
+	match weapon.attack_pattern:
+		WeaponData.AttackPattern.CLUSTER:
+			return _cluster_handler
+		_:
+			return _standard_handler
 
 func _validate_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> bool:
-    var distance = hex_grid.get_distance(
-        attacker.grid_position,
-        target.grid_position
-    )
-    return (
-        distance >= weapon.minimum_range &&
-        distance <= weapon.maximum_range &&
-        line_of_sight.has_clear_path(attacker, target)
-    )
-
-
+	var distance = hex_grid.get_distance(
+		attacker.grid_position,
+		target.grid_position
+	)
+	return (
+		distance >= weapon.minimum_range &&
+		distance <= weapon.maximum_range &&
+		line_of_sight.has_clear_path(attacker, target)
+	)
