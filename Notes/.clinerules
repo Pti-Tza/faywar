@@ -9,28 +9,8 @@
     )
 - Don't couple UI Logic and Game Logic
 
-- BattleController is Sole System Operator
+- Decouple script into data and handler in case of Unit Components, abulities, and pilots
 
-    1. Only BattleController should directly call MovementSystem/AttackSystem methods
-
-    2. Maintains turn state validation
-
-    3. Handles action sequencing
-
-    4. Controllers are Decision Makers
-
-- Use Mediator Pattern to handle decoupled UI and Game Logic
-
-[Action Handling]
-1. Never reference UnitHandler directly in UI
-2. Use UUIDs for all controller-unit interactions
-3. Log entries must contain raw data + formatted text
-
-[Security]
-1. Triple-layer turn validation:
-   - Instance validity
-   - Data structure check
-   - UUID ownership
 
 [Component Naming]
 - Use _handler suffix for runtime components
@@ -45,15 +25,18 @@
 2. UnitHandler -> SectionHandler
 3. SectionHandler -> ComponentHandler
 
-[AI Priorities]
-- Berserker: Always closes distance
-- Sniper: Prefers elevation advantage
-
-[Testing Rules]
-- Validate all 2D6 rolls against histogram
-- Test movement costs at max grid range
-
 [Action Handling]
 - All game actions in Combat scenes flow through BattleController 
 - Controllers only emit actions, never execute directly
-- Action validation happens in BattleController
+- Action happens in BattleController
+
+Communication and Problem-Solving:Code Quality and Best Practices:Paradigms and Principles:Semantic Naming and Abstractions:Platform Thinking: If you need clarification on any part of the task, ask for more information before proceeding with the implementation.
+
+
+# documentation_standards
+purpose: "Maintain clarity and consistency in project documentation."
+details:
+  - "Write clear and concise comments for all significant sections of code."
+  - "Use **one set of triple quotes** for docstrings to prevent syntax errors and ensure consistency."
+  - "Document the purpose and expected behavior of functions, modules, and important classes."
+

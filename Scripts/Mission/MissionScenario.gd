@@ -7,33 +7,7 @@ It serves as the blueprint for all mission logic, allowing designers to compose 
 '''
 
 ### Core Metadata ###
-@export_category("Mission Metadata")
-@export var mission_name: String = "Operation Phoenix" 
-	# Display name for the mission
-@export var mission_id: String = "campaign_1_mission_3" 
-	# Unique identifier for tracking and loading
-@export var mission_description: String = "Eliminate hostile forces in a strategic engagement." 
-	# Brief description for UI display
-@export var mission_difficulty: int = 0 
-	# 0=Easy, 1=Medium, 2=Hard (for procedural adjustments)
 
-@export_category("Team Configuration")
-@export var team_relationships := {
-	# Team 0 (Player)
-	0: {
-		allies = [3],  # Team 3 is ally
-		enemies = [1, 2]  # Teams 1 and 2 are hostile
-	},
-	# Team 1 (Enemy)
-	1: {
-		allies = [2],
-		enemies = [0, 3]
-	}
-}
-
-### Objective Configuration ###
-@export_category("Mission Objectives")
-@export var primary_objectives: Array[MissionObjective] = []
 	# Objectives required for mission victory
 @export var secondary_objectives: Array[MissionObjective] = []
 	# Optional objectives for bonus rewards
@@ -47,19 +21,7 @@ It serves as the blueprint for all mission logic, allowing designers to compose 
 @export var environmental_effects: Array[MissionEvent] = []
 	# Persistent effects applied at mission start
 
-### Progression ###
-@export_category("Progression")
-@export var victory_rewards: Dictionary = {"xp": 1000, "currency": 5000} 
-	# Rewards granted on mission success
-@export var failure_consequences: Dictionary = {"xp_loss": 200, "unit_damage": 0.15} 
-	# Penalties applied on mission failure
 
-### Visibility ###
-@export_category("Editor")
-@export var preview_image: Texture = null 
-	# Thumbnail for mission selection UI
-@export var is_available: bool = true 
-	# Determines if mission can be selected
 
 ### Validation ###
 func _validate_properties() -> void:

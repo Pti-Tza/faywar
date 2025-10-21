@@ -53,17 +53,7 @@ sequenceDiagram
     style MS fill:#fdd,stroke:#333
     style AS fill:#dfd,stroke:#333
 
-Key Architectural Rules:
 
-BattleController is Sole System Operator
-
-Only BattleController should directly call MovementSystem/AttackSystem methods
-
-Maintains turn state validation
-
-Handles action sequencing
-
-Controllers are Decision Makers
 
 gdscript
 Copy
@@ -107,15 +97,6 @@ flowchart TD
     BUI -->|update| LOG[CombatLog]
     BUI -->|highlight| GRID[HexGrid]        
 
-New Patterns Added:
 
-UUID-Based Validation
-All unit references in actions must use UUIDs for turn validation
-
-Structured Logging
-Log entries follow {timestamp, type, message, color, data} format
-
-Three-Layer UI Mediation
-UI → UIController → PlayerController → BattleController
 
 
