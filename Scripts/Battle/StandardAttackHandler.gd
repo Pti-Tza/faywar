@@ -5,7 +5,7 @@ func _init(grid: HexGridManager, los: LineOfSight):
     hex_grid = grid
     line_of_sight = los
 
-func resolve_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> AttackResult:
+func resolve_attack(attacker: Unit, target: Unit, weapon: WeaponData) -> AttackResult:
     var result = AttackResult.new()
     result.valid = true
     
@@ -33,7 +33,7 @@ func resolve_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponDa
     
     return result
 
-func _calculate_base_to_hit(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> int:
+func _calculate_base_to_hit(attacker: Unit, target: Unit, weapon: WeaponData) -> int:
     var base = 4  # Base TN in BattleTech
     base += attacker.pilot.get_gunnery_skill()
     base += _get_range_modifier(attacker, target, weapon)
@@ -41,7 +41,7 @@ func _calculate_base_to_hit(attacker: UnitHandler, target: UnitHandler, weapon: 
     base += line_of_sight.get_cover_modifier(target)
     return base
 
-func _get_range_modifier(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> int:
+func _get_range_modifier(attacker: Unit, target: Unit, weapon: WeaponData) -> int:
     var distance = hex_grid.get_distance(
         attacker.grid_position,
         target.grid_position
@@ -56,14 +56,14 @@ func _get_range_modifier(attacker: UnitHandler, target: UnitHandler, weapon: Wea
     else:
         return 999  # Should be caught by validate_attack
 
-func _apply_modifiers(base_tn: int, attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> int:
+func _apply_modifiers(base_tn: int, attacker: Unit, target: Unit, weapon: WeaponData) -> int:
     var modified_tn = base_tn
     modified_tn += attacker.get_heat_penalty()
     modified_tn -= weapon.accuracy_bonus
     modified_tn += target.get_ecm_penalty()
     return max(modified_tn, 2)  # Minimum TN of 2
 
-func _process_hit(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData, dice_roll: int) -> HitData:
+func _process_hit(attacker: Unit, target: Unit, weapon: WeaponData, dice_roll: int) -> HitData:
     var hit = HitData.new()
     
     # Calculate hit location
@@ -81,13 +81,13 @@ func _process_hit(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData
     
     return hit
 
-func _get_attack_angle(attacker: UnitHandler, target: UnitHandler) -> float:
+func _get_attack_angle(attacker: Unit, target: Unit) -> float:
     var attacker_pos = hex_grid.get_world_position(attacker.grid_position)
     var target_pos = hex_grid.get_world_position(target.grid_position)
     var direction_vector = (attacker_pos - target_pos).normalized()
     return rad_to_deg(direction_vector.angle_to(target.facing_direction))
 
-func _check_armor_penetration(target: UnitHandler, location: String, damage: float) -> bool:
+func _check_armor_penetration(target: Unit, location: String, damage: float) -> bool:
     var armor = target.get_armor(location)
     var structure = target.get_structure(location)
     return damage > armor || (structure > 0 && armor == 0)

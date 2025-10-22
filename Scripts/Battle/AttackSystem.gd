@@ -4,7 +4,7 @@ class_name AttackSystem
 
 static var instance: AttackSystem
 
-signal attack_resolved(attacker: UnitHandler, target: UnitHandler, result: AttackResult)
+signal attack_resolved(attacker: Unit, target: Unit, result: AttackResult)
 
 @export var hex_grid: HexGridManager
 @export var line_of_sight: LineOfSight
@@ -24,7 +24,7 @@ func _ready():
 	_standard_handler = StandardAttackHandler.new(hex_grid, line_of_sight)
 	_cluster_handler = ClusterAttackHandler.new(hex_grid, line_of_sight)
 
-func resolve_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> void:
+func resolve_attack(attacker: Unit, target: Unit, weapon: WeaponData) -> void:
 	var result = AttackResult.new()
 	
 	if !_validate_attack(attacker, target, weapon):
@@ -44,7 +44,7 @@ func _get_attack_handler(weapon: WeaponData) -> AttackHandler:
 		_:
 			return _standard_handler
 
-func _validate_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> bool:
+func _validate_attack(attacker: Unit, target: Unit, weapon: WeaponData) -> bool:
 	var distance = hex_grid.get_distance(
 		attacker.grid_position,
 		target.grid_position

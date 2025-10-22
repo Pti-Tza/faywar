@@ -8,8 +8,8 @@ var hex_grid: HexGridManager
 var attack_system: AttackSystem
 
 # Runtime state
-var _current_unit: UnitHandler
-var _enemy_units: Array[UnitHandler]
+var _current_unit: Unit
+var _enemy_units: Array[Unit]
 
 
 
@@ -60,7 +60,7 @@ func get_priority() -> float:
     return firepower
 
 # Helper methods
-func _find_nearest_enemy() -> UnitHandler:
+func _find_nearest_enemy() -> Unit:
     var nearest = null
     var min_distance = INF
     
@@ -75,7 +75,7 @@ func _find_nearest_enemy() -> UnitHandler:
     
     return nearest
 
-func _select_best_weapon(target: UnitHandler) -> WeaponData:
+func _select_best_weapon(target: Unit) -> WeaponData:
     var best_weapon = null
     var best_score = -INF
     
@@ -88,7 +88,7 @@ func _select_best_weapon(target: UnitHandler) -> WeaponData:
     
     return best_weapon
 
-func _calculate_weapon_score(weapon: WeaponData, target: UnitHandler) -> float:
+func _calculate_weapon_score(weapon: WeaponData, target: Unit) -> float:
     # Simple scoring: damage potential adjusted by range
     var distance = hex_grid.get_distance(
         _current_unit.grid_position,

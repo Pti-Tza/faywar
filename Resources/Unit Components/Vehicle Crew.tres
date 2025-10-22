@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ComponentData" load_steps=2 format=3 uid="uid://ckqcxxt6e3adp"]
+
+[ext_resource type="Script" uid="uid://ctqdujl8i3k6i" path="res://Scripts/Unit/Components/ComponentData.gd" id="1_srs4p"]
+
+[resource]
+script = ExtResource("1_srs4p")
+metadata/_custom_type_script = "uid://ctqdujl8i3k6i"

@@ -20,26 +20,3 @@ It serves as the blueprint for all mission logic, allowing designers to compose 
 	# Turns between auto-saves (0 = disabled)
 @export var environmental_effects: Array[MissionEvent] = []
 	# Persistent effects applied at mission start
-
-
-
-### Validation ###
-func _validate_properties() -> void:
-	if mission_id.is_empty():
-		push_error("Mission ID cannot be empty")
-	
-	if primary_objectives.size() == 0:
-		push_warning("No primary objectives defined")
-	
-	if turn_limit < -1:
-		push_error("Turn limit must be -1 (unlimited) or higher")
-
-### Helper Methods ###
-func has_victory_conditions() -> bool:
-	return primary_objectives.size() > 0
-
-func is_time_limited() -> bool:
-	return turn_limit > 0
-
-func get_total_objectives() -> int:
-	return primary_objectives.size() + secondary_objectives.size()

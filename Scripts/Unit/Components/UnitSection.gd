@@ -20,7 +20,7 @@ signal armor_damaged(amount: float, remaining: float)
 ## Emitted when structure takes damage (amount, remaining)
 signal structure_damaged(amount: float, remaining: float)
 ## Emitted when section structure reaches zero
-signal section_destroyed
+signal section_destroyed(section: UnitSection)
 
 ### Core Properties ###
 
@@ -30,41 +30,42 @@ var component_handlers: Array[ComponentHandler] = []  # Child components
 
 # Initialize section state when added to scene tree
 func _ready():
-	current_armor = max_armor
-	current_structure = max_structure
-	_initialize_components()
+    current_armor = max_armor
+    current_structure = max_structure
+    _initialize_components()
 
 ## Main damage entry point for the section
 ## @param damage: float - Raw damage before armor reduction
 ### Damage Handling ###
 func apply_damage(damage: float) -> void:
-	# Reduce structure if armor is depleted
-	if current_armor > 0:
-		current_armor = max(current_armor - damage, 0.0)
-		armor_damaged.emit(damage, current_armor)
-	else:
-		current_structure -= damage
-		structure_damaged.emit(damage, current_structure)
-		
-		# Check for destruction
-		if current_structure <= 0:
-			section_destroyed.emit(section_name)
+    # Reduce structure if armor is depleted
+    if current_armor > 0:
+        current_armor = max(current_armor - damage, 0.0)
+        armor_damaged.emit(damage, current_armor)
+    else:
+        current_structure -= damage
+        structure_damaged.emit(damage, current_structure)
+        
+        # Check for destruction
+        if current_structure <= 0:
+            section_destroyed.emit(self)
 
-func _on_section_destroyed(sectionname: String) -> void:
-	# Optional: Handle section-specific effects (e.g., explosion)
-	emit_signal("section_destroyed", sectionname)
+func _on_section_destroyed() -> void:
+    # Optional: Handle section-specific effects (e.g., explosion)
+    section_destroyed.emit(self)
 
 # Creates component handlers from section data
 func _initialize_components() -> void:
-	for component_data in components:
-		var handler = ComponentHandler.new()
-		handler.component_data = component_data
-		component_handlers.append(handler)
-		add_child(handler)
+    for component_data in components:
+        if component_data:
+             var handler = ComponentHandler.new()
+             handler.component_data = component_data
+             component_handlers.append(handler)
+             add_child(handler)
 
 # Applies damage to critical components in the section
 func _distribute_component_damage(damage: float) -> void:
-	for handler in component_handlers:
-		if handler.is_operational() && handler.component_data.is_critical:
-			# Apply 50% of remaining damage to critical components
-			handler.apply_damage(damage * 0.5)
+    for handler in component_handlers:
+        if handler.is_operational() && handler.component_data.is_critical:
+            # Apply 50% of remaining damage to critical components
+            handler.apply_damage(damage * 0.5)

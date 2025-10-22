@@ -3,8 +3,8 @@ extends PanelContainer
 class_name BottomActionPanel
 
 ## Custom signals
-signal movement_initiated(unit: UnitHandler)
-signal attack_initiated(unit: UnitHandler)
+signal movement_initiated(unit: Unit)
+signal attack_initiated(unit: Unit)
 
 #signal ability_used(ability: AbilityResource)
 
@@ -24,9 +24,9 @@ signal attack_initiated(unit: UnitHandler)
     "brace": {"text": "Brace", "icon": "res://Assets/Textures/UI/brace_icon.png"}
 }
 
-var current_unit: UnitHandler
+var current_unit: Unit
 
-func show_for_unit(unit: UnitHandler) -> void:
+func show_for_unit(unit: Unit) -> void:
     current_unit = unit
     visible = true
     _clear_actions()

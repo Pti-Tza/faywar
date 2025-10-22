@@ -6,7 +6,7 @@ static var instance : PlayerController
 func _init() -> void:
     instance = self
 
-func begin_turn(unit: UnitHandler) -> void:
+func begin_turn(unit: Unit) -> void:
     _current_unit = unit
     movement_intent.emit(unit)  # Let BattleUIController handle visualization
 
@@ -16,7 +16,7 @@ func handle_move_input(path: Array[HexCell]) -> void:
         "path": path
     })
 
-func handle_attack_input(target: UnitHandler, weapon: WeaponData) -> void:
+func handle_attack_input(target: Unit, weapon: WeaponData) -> void:
     action_selected.emit("attack", {
         "source": _current_unit,
         "target": target,

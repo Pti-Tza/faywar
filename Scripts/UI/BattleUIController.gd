@@ -25,17 +25,17 @@ func _ready() -> void:
     BattleController.instance.action_validated.connect(_on_action_validated)
     BattleController.instance.action_executed.connect(_on_action_executed)
 
-func _on_unit_selected(unit: UnitHandler) -> void:
+func _on_unit_selected(unit: Unit) -> void:
     unit_status.update_display(unit)
     if unit.controller.team_index == 0:
         bottom_action_panel.show_for_unit(unit)
 
-func _show_movement_ui(unit: UnitHandler) -> void:
+func _show_movement_ui(unit: Unit) -> void:
     unit_status.update_display(unit)
     bottom_action_panel.update_actions(unit)
     HexGridHighlights.instance.update_movement_range(unit)
 
-func _show_attack_result(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> void:
+func _show_attack_result(attacker: Unit, target: Unit, weapon: WeaponData) -> void:
     combat_log.add_entry(
         "{attacker} attacked {target} with {weapon}".format({
             "attacker": attacker.unit_data.name,
@@ -80,7 +80,7 @@ func _on_action_executed(action: String, result: Dictionary):
 
 
 
-func _on_movement(unit: UnitHandler, path: Array) -> void:
+func _on_movement(unit: Unit, path: Array) -> void:
     unit_status.update_display(unit)
     combat_log.add_entry("{unit} moved {distance}".format({
         "unit": unit.unit_data.name,

@@ -8,7 +8,7 @@ class_name UnitStatusPanel
 @onready var unit_name := $VBox/NameLabel
 @onready var moves_label := $VBox/MovesLabel
 
-func update_display(unit: UnitHandler) -> void:
+func update_display(unit: Unit) -> void:
     # Core stats
     unit_name.text = unit.unit_data.display_name
     moves_label.text = "MP: %d/%d" % [unit.remaining_mp, unit.stats.movement_range]

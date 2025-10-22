@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="faywar"
-run/main_scene="uid://cmcrvsew2ri22"
+run/main_scene="uid://c5cnmartjt4dl"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 

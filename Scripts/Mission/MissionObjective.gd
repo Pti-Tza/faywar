@@ -17,7 +17,7 @@ enum Type { PRIMARY, SECONDARY }
 
 
 ### Internal State ###
-var _tracked_units: Array[UnitHandler] = []
+var _tracked_units: Array[Unit] = []
 var _unit_loader: UnitManager = null  # Reference to UnitLoader
 var progress: float = 0.0
 
@@ -56,12 +56,12 @@ func _check_pre_spawned_units() -> void:
 
 	_update_progress()  # Update initial progress
 
-func _on_unit_spawned(unit: UnitHandler) -> void:
+func _on_unit_spawned(unit: Unit) -> void:
 	if unit.identity.unit_id in target_unit_ids:
 		_tracked_units.append(unit)
 		_update_progress()
 
-func _on_unit_destroyed(unit: UnitHandler) -> void:
+func _on_unit_destroyed(unit: Unit) -> void:
 	if _tracked_units.has(unit):
 		_tracked_units.erase(unit)
 		_update_progress()

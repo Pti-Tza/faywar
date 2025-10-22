@@ -1,4 +1,4 @@
-extends IStateController
+extends Node
 class_name BattleController
 
 ## Tactical combat state controller managing turn-based battle execution
@@ -23,8 +23,8 @@ signal action_validated(action: String, valid: bool)
 signal action_executed(action: String, result: Dictionary)
 
 
-signal unit_selected(unit: UnitHandler)
-signal movement_executed(unit: UnitHandler, path: Array[HexCell])
+signal unit_selected(unit: Unit)
+signal movement_executed(unit: Unit, path: Array[HexCell])
 
 #endregion
 
@@ -50,7 +50,7 @@ signal movement_executed(unit: UnitHandler, path: Array[HexCell])
 
 #region Private Variables
 var _current_turn: int = 0            # Current round number
-var _active_unit: UnitHandler = null   # Unit currently taking action
+var _active_unit: Unit = null   # Unit currently taking action
 var _combat_log: Array[String] = []   # Record of significant combat events
 #endregion
 
@@ -69,45 +69,13 @@ func start_combat_round() -> void:
 #region State Lifecycle Methods
 ## Initialize combat state with mission parameters
 ## @param context: Dictionary containing mission data and deployment info
-func enter_state(context: Dictionary) -> void:
-    super.enter_state(context)
-    # Set up battlefield environment
-    _setup_combat_environment(context)
-    # Deploy units to battlefield
-    _spawn_units(context)
+func start_battle():
+
     # Initialize mission director
     _initialize_mission_director()
     # Begin combat sequence
     _start_combat_sequence()
 
-## Clean up combat state and return result data
-## @return: Dictionary containing combat log, survivors, and battle outcome
-func exit_state() -> Dictionary:
-    var transition_data = super.exit_state()
-    
-    # Cleanup active unit connections
-    if is_instance_valid(_active_unit):
-        if _active_unit.has_signal("turn_ended"):
-            _active_unit.disconnect("turn_ended", _on_unit_turn_ended)
-        _active_unit = null
-    
-    # Store combat results
-    transition_data["combat_log"] = _combat_log.duplicate()
-    
-    if unit_loader:
-        transition_data["remaining_units"] = unit_loader.get_survivors()
-        transition_data["destroyed_units"] = unit_loader.get_destroyed()
-    else:
-        push_warning("BattleController: Missing unit_loader reference")
-        transition_data["remaining_units"] = []
-        transition_data["destroyed_units"] = []
-    
-    # Clear battle-specific state
-    _combat_log.clear()
-    _current_turn = 0
-    initiative_system.clear()
-    
-    return transition_data
 
 
 ## Get unique identifier for this state
@@ -127,15 +95,6 @@ func end_turn_early() -> void:
 #endregion
 
 #region Private Implementation
-## Configure battlefield environment from mission data
-## @param context: Mission configuration data
-func _setup_combat_environment(context: Dictionary) -> void:
-    # Load map layout and terrain data
-    grid_map.load_map(context.mission_data.map)
-    # Reset turn counter
-    _current_turn = 0
-    # Clear previous combat records
-    _combat_log.clear()
 
 ## Spawn units onto battlefield according to deployment data
 ## @param context: Contains player/enemy unit configurations
@@ -174,7 +133,7 @@ func _process_next_unit() -> void:
 
 ## Begin turn sequence for specific unit
 ## @param unit: CombatUnit starting their turn
-func _start_unit_turn(unit: UnitHandler) -> void:
+func _start_unit_turn(unit: Unit) -> void:
     # Notify systems of phase change
     turn_phase_changed.emit("UNIT_TURN_START")
     

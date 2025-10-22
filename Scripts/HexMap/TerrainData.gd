@@ -51,13 +51,13 @@ class_name TerrainData
 @export var crit_chance_mod: float = 1.0   # Critical hit modifier
 
 # Battletech-standard movement cost accessor
-func get_movement_cost(mobility_type: UnitData.MobilityType) -> int:
+func get_movement_cost(mobility_type: Unit.MobilityType) -> int:
     match mobility_type:
-        UnitData.MobilityType.BIPEDAL: return foot_movement
-        UnitData.MobilityType.WHEELED: return wheeled_movement
-        UnitData.MobilityType.TRACKED: return tracked_movement
-        UnitData.MobilityType.HOVER: return hover_movement
-        UnitData.MobilityType.AERIAL: return vtol_movement
+        Unit.MobilityType.BIPEDAL: return foot_movement
+        Unit.MobilityType.WHEELED: return wheeled_movement
+        Unit.MobilityType.TRACKED: return tracked_movement
+        Unit.MobilityType.HOVER: return hover_movement
+        Unit.MobilityType.AERIAL: return vtol_movement
         _: return 999
 
 # Official BT terrain validation (TO p.315)
@@ -71,7 +71,7 @@ func is_valid_combination(other: TerrainData) -> bool:
 func is_water() -> bool:
     return "water" in name.to_lower()
 
-func is_impassable_for(mobility_type:  UnitData.MobilityType) -> bool:
+func is_impassable_for(mobility_type:  Unit.MobilityType) -> bool:
     return get_movement_cost(mobility_type) >= 999
 
 func get_all_textures() -> Array[Texture2D]:

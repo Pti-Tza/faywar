@@ -8,7 +8,7 @@ const CLUSTER_TABLES = {
     "ATM": [0,1,2,3,3,4,4,5,5,6,6]     # Example custom weapon
 }
 
-func resolve_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> AttackResult:
+func resolve_attack(attacker: Unit, target: Unit, weapon: WeaponData) -> AttackResult:
     var result = AttackResult.new()
     result.valid = true
     

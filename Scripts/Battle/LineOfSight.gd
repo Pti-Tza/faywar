@@ -50,7 +50,7 @@ static func has_clear_path(attacker: Node3D, target: Node3D) -> bool:
 ## @param start_hex: Starting hex coordinates (Vector2i)
 ## @param end_hex: Ending hex coordinates (Vector2i)
 ## @return: Array[HexCell] - Path of hex cells
-static func _get_hex_path(hex_grid: HexGridManager, unit : UnitHandler, start_hex: Vector3, end_hex: Vector3) -> Array[HexCell]:
+static func _get_hex_path(hex_grid: HexGridManager, unit : Unit, start_hex: Vector3, end_hex: Vector3) -> Array[HexCell]:
 	return hex_grid.find_unit_path(unit, start_hex, end_hex)
 
 ## Checks if a hex cell obstructs line of sight

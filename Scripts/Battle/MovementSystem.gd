@@ -14,10 +14,10 @@ static var instance : MovementSystem
 ###
 
 #--- Signals ---
-signal movement_started(unit: UnitHandler, path: Array[HexCell])
-#signal movement_ended(unit: UnitHandler, success: bool)
-signal movement_blocked(unit: UnitHandler, reason: String)
-signal movement_executed(unit: UnitHandler, path: Array[HexCell])
+signal movement_started(unit: Unit, path: Array[HexCell])
+#signal movement_ended(unit: Unit, success: bool)
+signal movement_blocked(unit: Unit, reason: String)
+signal movement_executed(unit: Unit, path: Array[HexCell])
 #--- Exported Properties ---
 @export_category("Dependencies")
 @export var hex_grid: HexGridManager
@@ -49,7 +49,7 @@ func _ready():
 # @param unit: Unit attempting to move
 # @param target_hex: Target HexCell or axial coordinates
 # @return: Dictionary { valid: bool, reason: String, cost: float }
-func validate_move(unit: UnitHandler, target_hex: HexCell) -> Dictionary:
+func validate_move(unit: Unit, target_hex: HexCell) -> Dictionary:
 	var origin_cell = hex_grid.get_cell(unit.current_hex.x, unit.current_hex.y)
 	var target_cell = target_hex
 	
@@ -85,7 +85,7 @@ func validate_move(unit: UnitHandler, target_hex: HexCell) -> Dictionary:
 # @param unit: Unit to move
 # @param target_hex: Target coordinates
 # @return: bool - Movement success status
-func execute_move(unit: UnitHandler, target_hex: HexCell) -> bool:
+func execute_move(unit: Unit, target_hex: HexCell) -> bool:
 	var validation = validate_move(unit, target_hex)
 	if not validation.valid:
 		movement_blocked.emit(unit, validation.reason)
@@ -102,7 +102,7 @@ func execute_move(unit: UnitHandler, target_hex: HexCell) -> bool:
 ### 
 # Process end of movement phase
 # Called at turn end to finalize positions
-func finalize_movement(unit: UnitHandler) -> void:
+func finalize_movement(unit: Unit) -> void:
 	if not _movement_paths.has(unit.uuid):
 		return
 		
@@ -121,7 +121,7 @@ func finalize_movement(unit: UnitHandler) -> void:
 # @param unit: Unit to check
 # @return: Array[HexCell] - Valid destination hexes
 # MovementSystem.gd - Dijkstra's Implementation
-func get_available_hexes(unit: UnitHandler) -> Array[HexCell]:
+func get_available_hexes(unit: Unit) -> Array[HexCell]:
 	var costs = {}
 	var pq = PriorityQueue.new()
 	var start_pos = unit.grid_position
@@ -161,13 +161,13 @@ func _calculate_elevation_cost(from_cell: HexCell, to_cell: HexCell) -> float:
 
 ### 
 # Get unit's current hex coordinates
-func get_unit_hex(unit: UnitHandler) -> Vector3i:
+func get_unit_hex(unit: Unit) -> Vector3i:
 	return hex_grid.get_unit_cell(unit).axial_coord
 ###
 
 ### 
 # Reset movement state after turn
-func reset_movement(unit: UnitHandler) -> void:
+func reset_movement(unit: Unit) -> void:
 	unit.remaining_mp = unit.unit_data.base_movement
 	_movement_paths.erase(unit.uuid)
 ###

@@ -12,13 +12,13 @@ func _init(grid: HexGridManager, los: LineOfSight):
     line_of_sight = los
 
 # Main method to be overridden by child classes
-func resolve_attack(attacker: UnitHandler, target: UnitHandler, weapon: WeaponData) -> AttackResult:
+func resolve_attack(attacker: Unit, target: Unit, weapon: WeaponData) -> AttackResult:
     push_error("resolve_attack() not implemented in base AttackHandler")
     return AttackResult.new()
 
 # region Core Calculation Methods -------------------------------------------------
 
-func calculate_attack_angle(attacker: UnitHandler, target: UnitHandler) -> float:
+func calculate_attack_angle(attacker: Unit, target: Unit) -> float:
     var attacker_pos = hex_grid.get_world_position(attacker.grid_position)
     var target_pos = hex_grid.get_world_position(target.grid_position)
     var attack_vector = (attacker_pos - target_pos).normalized()
@@ -30,7 +30,7 @@ func calculate_attack_angle(attacker: UnitHandler, target: UnitHandler) -> float
     ))
     return fposmod(relative_angle + 180, 360) - 180  # Normalize to -180..180
 
-func determine_hit_location(target: UnitHandler, attack_angle: float) -> String:
+func determine_hit_location(target: Unit, attack_angle: float) -> String:
     var facing = _get_relative_facing(attack_angle)
     var profile = target.unit_data.get_hit_profile(facing)
     return _roll_hit_location(profile)
@@ -63,7 +63,7 @@ func _roll_hit_location(profile: Dictionary) -> String:
     push_warning("Hit location roll failed, defaulting to CTorso")
     return "ctorso"
 
-func _check_penetration(target: UnitHandler, location: String, damage: float) -> bool:
+func _check_penetration(target: Unit, location: String, damage: float) -> bool:
     var armor = target.get_armor(location)
     var structure = target.get_structure(location)
     return damage > armor || (structure > 0 && armor == 0)

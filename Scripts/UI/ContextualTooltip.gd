@@ -64,13 +64,13 @@ func update_tooltip() -> void:
     
     if current_target is HexCell:
         text = _get_terrain_tooltip(current_target)
-    elif current_target is UnitHandler:
+    elif current_target is Unit:
         text = _get_unit_tooltip(current_target)
     
     $Label.text = text
 
 func _get_terrain_tooltip(cell: HexCell) -> String:
-    var tooltip_text = """[b]{terrain}[/b]
+    var _tooltip_text = """[b]{terrain}[/b]
 Elevation: {elevation}
 Cover: {cover}%
     
@@ -83,26 +83,26 @@ Cover: {cover}%
     
     # Get mobility type names with costs
     var mobility_names = {
-        UnitData.MobilityType.BIPEDAL: "Bipedal",
-        UnitData.MobilityType.WHEELED: "Wheeled",
-        UnitData.MobilityType.HOVER: "Hover",
-        UnitData.MobilityType.TRACKED: "Tracked",
-        UnitData.MobilityType.AERIAL: "Aerial"
+        Unit.MobilityType.BIPEDAL: "Bipedal",
+        Unit.MobilityType.WHEELED: "Wheeled",
+        Unit.MobilityType.HOVER: "Hover",
+        Unit.MobilityType.TRACKED: "Tracked",
+        Unit.MobilityType.AERIAL: "Aerial"
     }
     
     # Add costs for each mobility type
     for mobility_type in cell.terrain_data.mobility_costs:
         var type_name = mobility_names.get(mobility_type, "Unknown")
         var cost = cell.terrain_data.mobility_costs[mobility_type]
-        tooltip_text += "%s: %s MP\n" % [type_name, cost]
+        _tooltip_text += "%s: %s MP\n" % [type_name, cost]
     
     # Add elevation modifier
-    tooltip_text += "\nElevation Modifier: +%s MP/level" % cell.terrain_data.elevation_cost_multiplier
+    _tooltip_text += "\nElevation Modifier: +%s MP/level" % cell.terrain_data.elevation_cost_multiplier
     
-    return tooltip_text
+    return _tooltip_text
 
-func _get_unit_tooltip(unit: UnitHandler) -> String:
-    var tooltip_text = """[b]{name}[/b]
+func _get_unit_tooltip(unit: Unit) -> String:
+    var _tooltip_text = """[b]{name}[/b]
 [sub]Class: {class}[/sub]
 ----------------------------
 [Armor] {armor}
@@ -119,39 +119,39 @@ func _get_unit_tooltip(unit: UnitHandler) -> String:
     })
     
     # Weapons section
-    tooltip_text += "\n[b]Weapons:[/b]"
+    _tooltip_text += "\n[b]Weapons:[/b]"
     if unit.weapons.is_empty():
-        tooltip_text += "\nNone"
+        _tooltip_text += "\nNone"
     else:
         for weapon in unit.weapons:
-            tooltip_text += "\n- %s (%s)" % [
+            _tooltip_text += "\n- %s (%s)" % [
                 weapon.weapon_name, 
                 _weapon_status(weapon)
             ]
             if weapon.uses_ammo:
-                tooltip_text += " %d/%d" % [weapon.current_ammo, weapon.max_ammo]
+                _tooltip_text += " %d/%d" % [weapon.current_ammo, weapon.max_ammo]
 
     # Active effects
     var active_effects = unit.get_active_effects()
     if !active_effects.is_empty():
-        tooltip_text += "\n----------------------------\n[b]Effects:[/b]"
+        _tooltip_text += "\n----------------------------\n[b]Effects:[/b]"
         for effect in active_effects:
-            tooltip_text += "\n- %s (%d turns)" % [effect.name, effect.duration]
+            _tooltip_text += "\n- %s (%d turns)" % [effect.name, effect.duration]
 
-    return tooltip_text
+    return _tooltip_text
 
 # Helper functions
-func _format_armor(unit: UnitHandler) -> String:
+func _format_armor(unit: Unit) -> String:
     var total = unit.get_total_armor()
-    var max = unit.unit_data.total_armor
-    return "%d/%d" % [total, max]
+    var _max = unit.unit_data.total_armor
+    return "%d/%d" % [total, _max]
 
-func _format_structure(unit: UnitHandler) -> String:
+func _format_structure(unit: Unit) -> String:
     var total = unit.get_total_structure()
-    var max = unit.unit_data.total_structure
-    return "%d/%d" % [total, max]
+    var _max = unit.unit_data.total_structure
+    return "%d/%d" % [total, _max]
 
-func _format_heat(unit: UnitHandler) -> String:
+func _format_heat(unit: Unit) -> String:
     return "%d/%d (%d%%)" % [
         unit.heat_system.current_heat,
         unit.heat_system.max_heat,

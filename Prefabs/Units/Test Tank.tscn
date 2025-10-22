@@ -1,0 +1,56 @@
+[gd_scene load_steps=6 format=3 uid="uid://dmh272oocjtjx"]
+
+[ext_resource type="Script" uid="uid://dsqank2mq43l8" path="res://Scripts/Unit/Unit.gd" id="1_8kbjo"]
+[ext_resource type="Script" uid="uid://bwmd4vednmjix" path="res://Scripts/Unit/Components/UnitSection.gd" id="2_dih5f"]
+[ext_resource type="Script" uid="uid://ctqdujl8i3k6i" path="res://Scripts/Unit/Components/ComponentData.gd" id="3_ntpb6"]
+[ext_resource type="Resource" uid="uid://ckqcxxt6e3adp" path="res://Resources/Unit Components/Vehicle Crew.tres" id="4_2dc8s"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_dih5f"]
+
+[node name="TestTank" type="Node3D" node_paths=PackedStringArray("sections")]
+script = ExtResource("1_8kbjo")
+unit_name = "Test Tank"
+sections = [NodePath("UnitSection Hull"), NodePath("UnitSection Engine")]
+mobility_type = 3
+
+[node name="TurretMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(2.6294658, 0, 0, 0, 2.619909, 0, 0, 0, 2.6363654, -0.0002281635, 2.7892964, 1.076314)
+mesh = SubResource("BoxMesh_dih5f")
+
+[node name="TurretMesh2" type="MeshInstance3D" parent="TurretMesh"]
+transform = Transform3D(0.18361801, 0, 0, 0, 0.183618, 0, 0, 0, 1.5416895, 0, 0, 0.64686686)
+mesh = SubResource("BoxMesh_dih5f")
+skeleton = NodePath("../..")
+
+[node name="TurretMesh3" type="MeshInstance3D" parent="TurretMesh/TurretMesh2"]
+transform = Transform3D(1.4339309, 0, 0, 0, 1.3157204, 0, 0, 0, 0.12633179, 0, 0, 0.4620366)
+mesh = SubResource("BoxMesh_dih5f")
+skeleton = NodePath("../../..")
+
+[node name="EngineMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(3.3673148, 0, 0, 0, 3.3673148, 0, 0, 0, 3.2274597, -0.0002281635, -0.24392699, -3.473725)
+mesh = SubResource("BoxMesh_dih5f")
+
+[node name="Left Wheels" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.2756715, 0, 0, 0, 2.619913, 0, 0, 0, 10.067746, 1.7153578, -0.8924261, -0.4761657)
+mesh = SubResource("BoxMesh_dih5f")
+
+[node name="Right Wheels" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.2756715, 0, 0, 0, 2.619913, 0, 0, 0, 10.067746, -1.7141914, -0.89381874, -0.47601798)
+mesh = SubResource("BoxMesh_dih5f")
+
+[node name="HullMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(3.3673148, 0, 0, 0, 3.3673148, 0, 0, 0, 5.4924946, -0.0002281635, -0.24392699, 1.076314)
+mesh = SubResource("BoxMesh_dih5f")
+
+[node name="UnitSection Hull" type="Node" parent="."]
+script = ExtResource("2_dih5f")
+section_name = "Hull"
+components = Array[ExtResource("3_ntpb6")]([ExtResource("4_2dc8s"), null, null, null])
+critical = true
+metadata/_custom_type_script = "uid://bwmd4vednmjix"
+
+[node name="UnitSection Engine" type="Node" parent="."]
+script = ExtResource("2_dih5f")
+section_name = "Hull Engine"
+metadata/_custom_type_script = "uid://bwmd4vednmjix"

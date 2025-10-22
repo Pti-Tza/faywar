@@ -18,8 +18,8 @@ signal action_selected(action_type: String, details: Dictionary)
 
 
 
-signal movement_intent(unit: UnitHandler)
-signal attack_intent(unit: UnitHandler)
+signal movement_intent(unit: Unit)
+signal attack_intent(unit: Unit)
 
     # Emitted when an action is selected
 
@@ -27,7 +27,7 @@ signal attack_intent(unit: UnitHandler)
 # None required for base controller
 
 ### Internal State ###
-var _current_unit: UnitHandler
+var _current_unit: Unit
     # Reference to the unit currently controlled
 
 # Team aligment
@@ -43,7 +43,7 @@ func get_hostile_teams() -> Array[int]:
     return TeamManager.instance.get_hostile_teams(team_index)
 
 ### Public API ###
-func begin_turn(unit: UnitHandler) -> void:
+func begin_turn(unit: Unit) -> void:
     '''
     @brief Begins the turn for the specified unit
     @param unit: Node - The unit to control

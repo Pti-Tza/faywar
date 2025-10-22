@@ -3,7 +3,7 @@ extends HBoxContainer
 class_name InitiativeTracker
 
 @onready var unit_icon = preload("res://UI/UnitIcon.tscn")
-func update_turn_order(order: Array[UnitHandler]) -> void:
+func update_turn_order(order: Array[Unit]) -> void:
     clear_children()
     
     for unit in order:
@@ -12,7 +12,7 @@ func update_turn_order(order: Array[UnitHandler]) -> void:
         icon.connect("gui_input", Callable(self, "_on_unit_icon_interacted").bind(unit))
         add_child(icon)
 
-func _on_unit_icon_interacted(event: InputEvent, unit: UnitHandler) -> void:
+func _on_unit_icon_interacted(event: InputEvent, unit: Unit) -> void:
     if event is InputEventMouseButton and event.pressed:
         emit_signal("unit_focused", unit)
 

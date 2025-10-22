@@ -42,10 +42,6 @@ var astar: DirectionalAStar
 var astar_graphs = {}
 
 
-var terrain_texture_array: Texture2DArray
-var terrain_normal_array: Texture2DArray
-var terrain_index_map: Dictionary = {}  # {TerrainData: {base_idx: int, count: int}}
-var noise := FastNoiseLite.new()
 
 func _init():
 	instance = self
@@ -79,11 +75,7 @@ const HEX_DIRECTIONS = [
 
 #region Core Grid Management
 func _ready() -> void:
-	print("HexGridManagerReady")
-
-		
-
-	
+	print("HexGridManagerReady")	
 
 func print_map_size():
 	await get_tree().process_frame
@@ -191,7 +183,7 @@ func initialize_astar():
 	astar_graphs.clear()
 	
 	# Create A* graph for each mobility type
-	for mobility in UnitData.MobilityType.values():
+	for mobility in Unit.MobilityType.values():
 		var graph = DirectionalAStar.new()
 		astar_graphs[mobility] = graph
 		
@@ -263,8 +255,8 @@ func calculate_directional_cost(source: HexCell, target: HexCell, mobility: int)
 ## Calculates BT-compliant movement cost between cells for specific unit
 ## [br][param source] Starting cell (must have valid terrain_data)
 ## [br][param target] Destination cell (must have valid terrain_data)
-## [br][param moving_unit] Optional UnitHandler attempting movement
-func calculate_directional_cost_for_unit(source: HexCell, target: HexCell, moving_unit: UnitHandler = null) -> float:
+## [br][param moving_unit] Optional Unit attempting movement
+func calculate_directional_cost_for_unit(source: HexCell, target: HexCell, moving_unit: Unit) -> float:
 	# Validate critical inputs
 	if not is_instance_valid(source) or not is_instance_valid(target):
 		push_error("Invalid cells in movement cost calculation")

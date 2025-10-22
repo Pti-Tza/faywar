@@ -12,19 +12,6 @@
 - Decouple script into data and handler in case of Unit Components, abulities, and pilots
 
 
-[Component Naming]
-- Use _handler suffix for runtime components
-- _data suffix for resource definitions
-
-[Signal Convention]
-- Past tense for completed actions
-- Present tense for state changes
-
-[Damage Propagation]
-1. AttackSystem -> UnitHandler
-2. UnitHandler -> SectionHandler
-3. SectionHandler -> ComponentHandler
-
 [Action Handling]
 - All game actions in Combat scenes flow through BattleController 
 - Controllers only emit actions, never execute directly
@@ -33,6 +20,11 @@
 Communication and Problem-Solving:Code Quality and Best Practices:Paradigms and Principles:Semantic Naming and Abstractions:Platform Thinking: If you need clarification on any part of the task, ask for more information before proceeding with the implementation.
 
 
+When naming scripts, try to avoid words like "Manager," "System," or "Controller."
+If you need to separate a script into logic and data, you can use "Handler" and "DATA."
+
+Since GDScript is close to Python, codo style should be inspired by Python's PEP 8 programming style guide.
+
 # documentation_standards
 purpose: "Maintain clarity and consistency in project documentation."
 details:
@@ -40,3 +32,16 @@ details:
   - "Use **one set of triple quotes** for docstrings to prevent syntax errors and ensure consistency."
   - "Document the purpose and expected behavior of functions, modules, and important classes."
 
+The most important principles of programming include:
+
+Clarity over cleverness – Write code that’s easy to read and understand.
+DRY (Don’t Repeat Yourself) – Avoid duplication by abstracting shared logic.
+Single Responsibility Principle (SRP) – Each module or class should have one reason to change.
+Separation of Concerns – Split a system into distinct features or layers that address separate tasks.
+KISS (Keep It Simple, Stupid) – Favor simple solutions over complex ones.
+YAGNI (You Aren’t Gonna Need It) – Don’t implement features until they’re actually needed.
+Composition over inheritance – Build flexible systems by composing objects rather than deep inheritance hierarchies.
+Encapsulation – Hide internal details and expose only what’s necessary.
+Testability – Design code so it can be easily tested (unit, integration, etc.).
+Consistency – Follow consistent naming, structure, and style to reduce cognitive load.
+These principles support maintainability, scalability, and collaboration—especially valuable in complex domains like game development.

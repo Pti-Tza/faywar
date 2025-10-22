@@ -4,7 +4,7 @@ extends Node
 ## Speed-based initiative implementation with tiebreaker support
 static var instance: InitiativeSystem
 ## Current initiative order
-var _turn_order: Array[UnitHandler] = []
+var _turn_order: Array[Unit] = []
 ## Configuration resource
 ## Random number generator for tiebreaks
 var _rng: RandomNumberGenerator
@@ -43,8 +43,8 @@ var _prediction_timer: Timer
 
 signal round_reset
 signal unit_added
-signal unit_removed(unit: UnitHandler)
-signal turn_order_updated(_turn_order: Array[UnitHandler])
+signal unit_removed(unit: Unit)
+signal turn_order_updated(_turn_order: Array[Unit])
 
 func _init():
 	_prediction_timer = Timer.new()
@@ -56,21 +56,21 @@ func _init():
 	_rng = RandomNumberGenerator.new()
 	_rng.seed = random_seed
 
-func add_unit(unit: UnitHandler) -> void:
+func add_unit(unit: Unit) -> void:
 	if not _turn_order.has(unit):
 		_turn_order.append(unit)
 		_queue_order_update()
 		unit_added.emit(unit)
 
-func remove_unit(unit: UnitHandler) -> void:
+func remove_unit(unit: Unit) -> void:
 	if unit in _turn_order:
 		_queue_order_update()
 		unit_removed.emit(unit)
 
-func get_turn_order() -> Array[UnitHandler]:
+func get_turn_order() -> Array[Unit]:
 	return _turn_order.duplicate()
 
-func get_next_unit() -> UnitHandler:
+func get_next_unit() -> Unit:
 	if _turn_order.is_empty():
 		return null
 	return _turn_order.pop_front()
@@ -95,14 +95,14 @@ func _recalculate_initiatives() -> void:
 	
 	_turn_order.sort_custom(_compare_units)
 
-func _calculate_unit_initiative(unit: UnitHandler) -> float:
+func _calculate_unit_initiative(unit: Unit) -> float:
 	return (
 		unit.stats.speed * base_speed_weight +
 		unit.stats.agility * agility_weight
 	)
 
 ## Custom sort comparison with tiebreakers
-func _compare_units(a: UnitHandler, b: UnitHandler) -> bool:
+func _compare_units(a: Unit, b: Unit) -> bool:
 	if a.initiative != b.initiative:
 		return a.initiative > b.initiative
 	

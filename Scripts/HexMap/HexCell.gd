@@ -130,7 +130,7 @@ func _init(q2: int, r2: int, e: float = 0, manager: HexGridManager = null) -> vo
 ## Calculates movement cost for a unit type
 ## [br][param mobility_type]: Unit's movement capability type
 ## [br][returns]: Total movement cost as float
-func get_movement_cost(mobility_type: UnitData.MobilityType) -> float:
+func get_movement_cost(mobility_type: Unit.MobilityType) -> float:
 	var base_cost = terrain_data.get_mobility_cost(mobility_type)
 	var elevation_cost = elevation * terrain_data.elevation_multiplier
 	return base_cost + elevation_cost

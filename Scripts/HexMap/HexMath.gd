@@ -6,22 +6,22 @@ extends Node
 
 static func get_max_elevation_change(mobility: int) -> int:
 	match mobility:
-		UnitData.MobilityType.BIPEDAL: return 2
-		UnitData.MobilityType.WHEELED: return 1
-		UnitData.MobilityType.TRACKED: return 1
-		UnitData.MobilityType.HOVER: return 3
-		UnitData.MobilityType.AERIAL: return 999
+		Unit.MobilityType.BIPEDAL: return 2
+		Unit.MobilityType.WHEELED: return 1
+		Unit.MobilityType.TRACKED: return 1
+		Unit.MobilityType.HOVER: return 3
+		Unit.MobilityType.AERIAL: return 999
 		_: return 0
 
 static func get_elevation_cost(mobility: int, elevation_diff: int) -> float:
 	match mobility:
-		UnitData.MobilityType.BIPEDAL:
+		Unit.MobilityType.BIPEDAL:
 			return _bipedal_elevation_cost(elevation_diff)
-		UnitData.MobilityType.WHEELED:
+		Unit.MobilityType.WHEELED:
 			return _wheeled_elevation_cost(elevation_diff)
-		UnitData.MobilityType.TRACKED:
+		Unit.MobilityType.TRACKED:
 			return abs(elevation_diff) * 0.7
-		UnitData.MobilityType.HOVER, UnitData.MobilityType.AERIAL:
+		Unit.MobilityType.HOVER, Unit.MobilityType.AERIAL:
 			return 0.0
 		_:
 			return 0.0
@@ -38,8 +38,8 @@ static func _wheeled_elevation_cost(diff: int) -> float:
 
 static func get_water_movement_multiplier(mobility: int) -> float:
 	match mobility:
-		UnitData.MobilityType.HOVER: return 0.8
-		UnitData.MobilityType.AERIAL: return 1.0
+		Unit.MobilityType.HOVER: return 0.8
+		Unit.MobilityType.AERIAL: return 1.0
 		_: return 2.0  # Penalty for non-aquatic units
 
 const SQRT3 = sqrt(3)

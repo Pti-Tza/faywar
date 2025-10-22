@@ -51,16 +51,16 @@ func _initialize_multimesh() -> void:
 		mm.set_instance_transform(i, transform)
 		mm.set_instance_visibility(i, false)  # Direct MultiMesh reference
 
-func update_movement_highlights(unit: UnitHandler) -> void:
+func update_movement_highlights(unit: Unit) -> void:
 	var reachable = MovementSystem.instance.get_reachable_hexes(unit)
 	_set_highlight_type(reachable, HighlightType.MOVE_RANGE)
 
-func update_attack_highlights(unit: UnitHandler, weapon: WeaponData) -> void:
+func update_attack_highlights(unit: Unit, weapon: WeaponData) -> void:
 	var attack_range = AttackSystem.instance.get_attack_range(unit, weapon)
 	_set_highlight_type(attack_range, HighlightType.ATTACK_RANGE)
 
 #ability system not implemented
-#func update_ability_highlights(unit: UnitHandler, ability: AbilityResource) -> void:
+#func update_ability_highlights(unit: Unit, ability: AbilityResource) -> void:
  #   var ability_range = AbilitySystem.instance.get_ability_range(unit, ability)
   #  _set_highlight_type(ability_range, HighlightType.ABILITY_RANGE)
 

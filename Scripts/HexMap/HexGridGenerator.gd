@@ -21,7 +21,7 @@ class_name HexGridGenerator
 var grid_radius: int = 0
 @export var grid_width: int = 10
 @export var grid_height: int = 5
-@export var hex : HexMapGenerator
+
 @export var default_terrain_data: TerrainData
 @export var slope_terrain_data: TerrainData
 @export var terrain_datas: Array[TerrainData] = []
@@ -169,9 +169,9 @@ func get_terrain_slope_angle(global_pos: Vector3) -> float:
 	
 	return angle_deg
 
-func _debug_draw_map(cells: Array[HexCell],offset: Vector3 = Vector3.ZERO):
+func _debug_draw_map(_cells: Array[HexCell],offset: Vector3 = Vector3.ZERO):
 	debug_mesh.mesh = null
-	if cells.is_empty():
+	if _cells.is_empty():
 		push_warning("Nothing to draw - empty cell array")
 		return
 
@@ -181,7 +181,7 @@ func _debug_draw_map(cells: Array[HexCell],offset: Vector3 = Vector3.ZERO):
 	var terrain_groups = {}
 
 	# Battletech terrain grouping
-	for cell : HexCell in cells:
+	for cell : HexCell in _cells:
 		var terrain_name = "unknown"
 		if cell.terrain_data.name:
 			terrain_name = cell.terrain_data.name.to_lower()
@@ -209,8 +209,8 @@ func _debug_draw_map(cells: Array[HexCell],offset: Vector3 = Vector3.ZERO):
 	else:
 		im.mesh = null
 
-func _draw_terrain_surface(im: ImmediateMesh, cells: Array, color: Color, hex_grid: HexGridManager,offset: Vector3 = Vector3.ZERO):
-	if cells.is_empty():
+func _draw_terrain_surface(im: ImmediateMesh, _cells: Array, color: Color, _hex_grid: HexGridManager,offset: Vector3 = Vector3.ZERO):
+	if _cells.is_empty():
 		return
 
 	var mat = StandardMaterial3D.new()
@@ -220,7 +220,7 @@ func _draw_terrain_surface(im: ImmediateMesh, cells: Array, color: Color, hex_gr
 	im.surface_begin(Mesh.PRIMITIVE_LINES, mat)
 	
 	# Battletech-standard hex visualization
-	for cell in cells:
+	for cell in _cells:
 		var center = axial_to_world(cell.q, cell.r) - offset
 		var elevation = cell.elevation * grid_manager.elevation_step
 		

@@ -20,19 +20,7 @@ var _unit_loader: UnitManager = null
 @export var mission_difficulty: int = 0 
 	# 0=Easy, 1=Medium, 2=Hard (for procedural adjustments)
 
-@export_category("Team Configuration")
-@export var team_relationships := {
-	# Team 0 (Player)
-	0: {
-		allies = [3],  # Team 3 is ally
-		enemies = [1, 2]  # Teams 1 and 2 are hostile
-	},
-	# Team 1 (Enemy)
-	1: {
-		allies = [2],
-		enemies = [0, 3]
-	}
-}
+
 
 ### Objective Configuration ###
 @export_category("Mission Objectives")
@@ -43,7 +31,7 @@ var _unit_loader: UnitManager = null
 func _ready():
 	if !battle_controller:
 		battle_controller = BattleController.instance
-	_initialize_objectives()
+	
 	if battle_controller:  # Ensure reference is valid
 		battle_controller.combat_started.connect(_on_combat_started)
 
@@ -82,6 +70,7 @@ func _check_victory():
 
 func initialize_mission(unit_loader: UnitManager):
 	_unit_loader = unit_loader
+	_initialize_objectives()
 	for objective in _active_objectives:
 		if objective.objective_type == MissionObjective.Type.PRIMARY:
 			objective.connect_to_unit_loader(unit_loader)
