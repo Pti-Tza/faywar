@@ -20,7 +20,7 @@ var destroyed_units: Array = []           # Wreckage and disabled units
 @export var default_wreckage_scene: PackedScene  # Fallback wreckage
 
 ### Dependencies ###
-@onready var hex_grid : HexGridManager    # Spatial tracking
+#@onready var hex_grid : HexGridManager    # Spatial tracking
 
 
 enum MobilityType {
@@ -43,14 +43,11 @@ func _init():
 ## @param team: int - Controlling faction/player
 func spawn_unit(unit_scene: PackedScene, spawn_hex: Vector3i, team: int = -1, id: String = "") -> Node:
 	
-	var profile = unit_scene.get_state().get_node_instance(0)
-	# Validate critical profile data
-	assert(profile != null, "UnitData cannot be null")
-	assert(profile != Unit, "Missing unit scene in profile")
+	
 	
 	# Instantiate and configure unit
-	var unit : Unit = profile.instantiate()
-	unit.name = "%s_%s" % [profile.unit_name, id]
+	var unit : Unit = unit_scene.instantiate()
+	unit.name = "%s_%s" % [unit.name, id]
 	unit.initialize(team, id)
 	
 	# Register unit
@@ -60,10 +57,10 @@ func spawn_unit(unit_scene: PackedScene, spawn_hex: Vector3i, team: int = -1, id
 	
 	# Heat not implemented
 	#unit.heat_critical.connect(_on_heat_critical.bind(unit))
-	unit.destroyed.connect(_on_unit_destroyed.bind(unit))
+	unit.unit_destroyed.connect(_on_unit_destroyed.bind(unit))
 	
 	# Set initial battlefield position
-	hex_grid.place_unit(unit, spawn_hex.x, spawn_hex.y)
+	HexGridManager.instance.place_unit(unit, spawn_hex.x, spawn_hex.y)
 	
 	emit_signal("unit_spawned", unit, spawn_hex)
 	return unit
@@ -85,7 +82,7 @@ func get_units_by_team(team: int, include_destroyed: bool = false) -> Array:
 ## @param include_wreckage: bool - Whether to count destroyed units
 func get_units_in_hex(hex: Vector3i, include_wreckage: bool = false) -> Array:
 	var source = active_units + (destroyed_units if include_wreckage else [])
-	return source.filter(func(u): return hex_grid.world_to_hex(u.position) == hex)
+	return source.filter(func(u): return HexGridManager.instance.world_to_hex(u.position) == hex)
 
 #endregion
 
@@ -104,7 +101,7 @@ func _on_unit_destroyed(unit: Unit) -> void:
 	
 	# Position wreckage and update grid
 	wreckage.position = unit.position
-	hex_grid.update_terrain(unit.grid_position, "Wreckage")
+	HexGridManager.instance.update_terrain(unit.grid_position, "Wreckage")
 	
 	# Update registries
 	active_units.erase(unit)
