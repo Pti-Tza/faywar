@@ -63,16 +63,18 @@ func generate_grid():
 
 	var offset :Vector3
 	if auto_size:
-		offset = Vector3(terrain_size.x/2 - hex_width/2 ,0, terrain_size.z/2 - hex_height/2 )
+		#offset = Vector3(terrain_size.x/2 - hex_width/2 ,0, terrain_size.z/2 - hex_height/2 )
+		offset = Vector3.ZERO
 	else:
-		offset = Vector3(grid_width * hex_width/2,0, grid_height * hex_height/2 )
+		#offset = Vector3(grid_width * hex_width/2,0, grid_height * hex_height/2 )
+		offset = Vector3.ZERO
 			
 	for row in grid_height:
 		for col in grid_width:
 			
 			# Offset coordinates for rectangle layout
-			var q = col - (row >> 1)  # Offset-q axial coordinate
-			var r = row
+			var q = col - (row >> 1) -  (grid_width ) / 2 # Offset-q axial coordinate
+			var r = row - (grid_height ) / 2
 			
 			var world_pos = axial_to_world(q, r) 
 			world_pos = world_pos-offset
@@ -96,7 +98,7 @@ func generate_grid():
 	grid_manager.initialize_from_data(cells)
 	print("total cells ",cells.size())
 func _calculate_grid_dimensions():
-	if !terrain_mesh || !terrain_mesh.mesh:
+	if !terrain_mesh:
 		push_error("No terrain mesh assigned!")
 		return
 	

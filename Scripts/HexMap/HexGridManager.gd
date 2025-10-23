@@ -14,8 +14,7 @@ class_name HexGridManager
 static var instance: HexGridManager
 
 @export_category("Grid Configuration")
-## Number of concentric rings around center (0 = single hex)
-@export var radius: int = 10
+
 ## Size of individual hexes (X: width, Y: height)
 @export var outer_radius: float = 10.0:
 	set(value):
@@ -77,26 +76,7 @@ const HEX_DIRECTIONS = [
 #region Core Grid Management
 func _ready() -> void:
 	print("HexGridManagerReady")
-	print_map_size()	
-
-func print_map_size():
-	await get_tree().process_frame
-	var center_cell = get_cell(0, 0)
-	if center_cell:
-		print("Map generation successful!")
-		print("Neighbors: ", get_neighbors(0, 0).size())
-	else:
-		print("Generation failed - check connections")
-		
-	var map_stats = {
-		"width": 2 * radius + 1,
-		"height": 2 * radius + 1,
-		"expected_cells":  1 + 6 * (radius * (radius + 1)) / 2,
-		"actual_cells": hex_grid.size()
-	}
-	print("Battletech Map Initialized:\n", JSON.stringify(map_stats, "\t"))	
-
-
+	
 
 
 
@@ -123,10 +103,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
 
 		var coords = cell.axial_coords  # Should be Vector2i
 		var elevation = cell.elevation
-		# Battletech map validation: Check hex coordinate validity
-		if not HexMath.is_valid_axial(coords.x, coords.y, radius):
-			push_error("Invalid axial coordinates (%d, %d), skipping" % [coords.x, coords.y])
-			continue
+		
 
 		# Check for duplicate coordinates
 		if hex_grid.has(coords):
@@ -151,7 +128,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
 #			])
 	cells = cell_data
 	# Post-initialization checks
-	print_map_size()
+
 	
 	if duplicate_count > 0:
 		push_warning("Found %d duplicate cells in input data" % duplicate_count)
@@ -350,11 +327,7 @@ func place_unit(unit: Node3D, q: int, r: int) -> bool:
 #endregion
 
 #region Helper Methods
-func _get_r_range(q: int) -> Vector2i:
-	return Vector2i(
-		max(-radius, -q - radius),
-		min(radius, -q + radius)
-	)
+
 
 func _create_hex_cell(q: int, r: int) -> void:
 	var cell = HexCell.new(q, r)
