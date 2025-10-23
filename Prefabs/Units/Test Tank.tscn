@@ -10,7 +10,6 @@
 [node name="TestTank" type="Node3D" node_paths=PackedStringArray("sections")]
 script = ExtResource("1_8kbjo")
 unit_name = "Test Tank"
-sections = [NodePath("UnitSection Hull"), NodePath("UnitSection Engine")]
 mobility_type = 3
 
 [node name="TurretMesh" type="MeshInstance3D" parent="."]

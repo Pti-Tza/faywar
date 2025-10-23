@@ -1,4 +1,4 @@
-@tool
+
 extends Node3D
 class_name HexGridGenerator
 
@@ -6,8 +6,8 @@ class_name HexGridGenerator
 #This script generates Hex terrain passability data using existing TerrainMesh Textures and slopes 
 
 
-@export_tool_button("Generate grid") var redraw_line_grid_button: Callable = generate_grid
-@export_tool_button("Clear Child") var clear_button: Callable = clear_child
+#@export_tool_button("Generate grid") var redraw_line_grid_button: Callable = generate_grid
+#@export_tool_button("Clear Child") var clear_button: Callable = clear_child
 
 @export var auto_gen: bool 
 

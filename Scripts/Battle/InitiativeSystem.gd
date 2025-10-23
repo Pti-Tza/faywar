@@ -55,6 +55,10 @@ func _init():
 	instance = self
 	_rng = RandomNumberGenerator.new()
 	_rng.seed = random_seed
+	
+func initialize(units : Array):
+	_turn_order.append_array(units)
+	recalculate_order()
 
 func add_unit(unit: Unit) -> void:
 	if not _turn_order.has(unit):

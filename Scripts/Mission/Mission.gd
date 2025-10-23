@@ -77,7 +77,7 @@ func initialize_mission(unit_loader: UnitManager):
 	_check_pre_spawned_units()
 
 func _check_pre_spawned_units():
-	for unit in _unit_loader.get_all_units():
+	for unit in _unit_loader.active_units:
 		for objective in _active_objectives:
 			if objective.objective_type == MissionObjective.Type.PRIMARY:
 				objective._on_unit_spawned(unit)

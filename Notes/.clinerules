@@ -11,6 +11,10 @@
 
 - Decouple script into data and handler in case of Unit Components, abulities, and pilots
 
+BattleController is Sole System Operator
+
+Units are storead as PackedScenes, with UnitSections as children
+Campaning levels are stored as scenes
 
 [Action Handling]
 - All game actions in Combat scenes flow through BattleController 

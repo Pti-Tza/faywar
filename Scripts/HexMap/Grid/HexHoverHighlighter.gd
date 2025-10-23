@@ -7,6 +7,7 @@ class_name HexHoverHighlighter
 @export var center_color: Color = Color.YELLOW
 @export var ring_color: Color = Color(0.5, 0.5, 0, 0.7)  # Semi-transparent amber
 
+
 var _current_center: HexCell = null
 var _last_position: Vector3 = Vector3.ZERO
 var _update_threshold: float = 0.1  # Update when cursor moves this far
@@ -28,6 +29,7 @@ func _process(_delta):
 		_last_position = cursor_pos
 
 func _update_hover_highlight(cursor_pos: Vector3):
+	print(" cursor", cursor_pos)
 	var new_center : HexCell = grid_manager.get_cell_at_position(cursor_pos)
 	#print(" axial ", grid_manager.world_to_axial(cursor_pos))
 	

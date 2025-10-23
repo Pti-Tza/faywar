@@ -1,3 +1,4 @@
+
 # hex_grid_manager.gd
 extends Node3D
 class_name HexGridManager
@@ -50,8 +51,8 @@ func _init():
 
 #region Internal State
 ## Dictionary of hex cells (key: Vector2i(q,r))
-var hex_grid: Dictionary = {}
-var cells : Array[HexCell]
+@export var hex_grid: Dictionary = {}
+@export var cells : Array[HexCell]
 ## Cache for unit positions (unit: Node3D → HexCell)
 var _unit_positions: Dictionary = {}
 #endregion
@@ -75,7 +76,8 @@ const HEX_DIRECTIONS = [
 
 #region Core Grid Management
 func _ready() -> void:
-	print("HexGridManagerReady")	
+	print("HexGridManagerReady")
+	print_map_size()	
 
 func print_map_size():
 	await get_tree().process_frame
@@ -135,20 +137,19 @@ func initialize_from_data(cell_data: Array[HexCell]):
 		hex_grid[coords] = cell
 		
 		# Ensure cell is in scene tree
-		if not is_instance_valid(cell.get_parent()):
-			add_child(cell)
-			cells.append(cell)
+		#if not is_instance_valid(cell.get_parent()):
+		#	add_child(cell)
+		#	cells.append(cell)
 		# Set world position
-		cell.position = axial_to_world(coords.x, coords.y)
-		cell.elevation = elevation
-		# Debug output
-		if OS.is_debug_build():
-			print("Initialized cell %s: %s (Elevation: %d) position %s" % [
-				coords,
-				cell.terrain_data.name if cell.terrain_data else "Missing Terrain",
-				cell.elevation, cell._global_position
-			])
 
+		# Debug output
+#		if OS.is_debug_build():
+#			print("Initialized cell %s: %s (Elevation: %d) position %s" % [
+#				coords,
+#				cell.terrain_data.name if cell.terrain_data else "Missing Terrain",
+#				cell.elevation, cell._global_position
+#			])
+	cells = cell_data
 	# Post-initialization checks
 	print_map_size()
 	
@@ -167,14 +168,7 @@ func initialize_from_data(cell_data: Array[HexCell]):
 			grid_cells.append(cell)
 
 
-	# Final validation
-	var expected_cells = 1 + 6 * (radius * (radius + 1)) / 2
-	if hex_grid.size() != expected_cells:
-		push_error("Cell count mismatch. Expected: %d, Actual: %d" % [
-			expected_cells,
-			hex_grid.size()
-		])
-	
+
 	grid_initialized.emit()
 	
 ## Initializes directional pathfinding graph    
@@ -348,6 +342,7 @@ func place_unit(unit: Node3D, q: int, r: int) -> bool:
 	if cell and cell.unit == null:
 		cell.unit = unit
 		_unit_positions[unit] = cell
+		unit.position = cell.position
 		return true
 	return false
 
