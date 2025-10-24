@@ -44,13 +44,15 @@ func _prepare_test_data():
 				_test_cells.append(all_cells.pick_random())
 		
 		"path":
-			var start = hex_grid_manager.get_cell(-test_radius, -test_radius)
-			var end = hex_grid_manager.get_cell(test_radius, test_radius)
-			if start and end:
-				_test_path = hex_grid_manager.find_unit_path(
-					null, start.axial_coord, end.axial_coord
-				)
-				_test_cells = [_test_path[0]]
+			var start : HexCell = hex_grid_manager.get_cell(-5, -5)
+			var end : HexCell = hex_grid_manager.get_cell(-8, -8)
+			
+			if not start or not end:
+				push_error("Start or end cell not found!")
+				return
+				
+			_test_path = hex_grid_manager.find_unit_path(UnitManager.instance.active_units[0], start.position, end.position)
+			_test_cells = _test_path
 
 func _run_next_test():
 	match test_mode:

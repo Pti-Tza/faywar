@@ -19,12 +19,17 @@ class_name HexGridGenerator
 @export var gen_on_start : bool
 
 var grid_radius: int = 0
-@export var grid_width: int = 10
-@export var grid_height: int = 5
+
+@export var terrain_width : float = 512
+@export var terrain_height : float = 512
+
+var grid_width: int = 10
+var grid_height: int = 10
 
 @export var default_terrain_data: TerrainData
 @export var slope_terrain_data: TerrainData
 @export var terrain_datas: Array[TerrainData] = []
+@export var generate_debug_mesh: bool
 @export var debug_mesh: MeshInstance3D
 
 @export var debug_colors: Dictionary = {
@@ -54,36 +59,46 @@ func generate_grid():
 		_calculate_grid_dimensions()
 	
 	# Hex layout calculations
-	var hex_horizontal_spacing = cell_size * sqrt(3)
-	var hex_vertical_spacing = cell_size * 1.5
+	
 	
 	var hex_width = cell_size * sqrt(3)
 	var hex_height = cell_size * 1.5
 	
-
+	grid_width = terrain_width / hex_width
+	grid_height = terrain_height / hex_height
+	
+	var half_width = grid_width / 2
+	var half_height = grid_height / 2
+	
 	var offset :Vector3
 	if auto_size:
 		#offset = Vector3(terrain_size.x/2 - hex_width/2 ,0, terrain_size.z/2 - hex_height/2 )
 		offset = Vector3.ZERO
 	else:
-		#offset = Vector3(grid_width * hex_width/2,0, grid_height * hex_height/2 )
+		#offset = Vector3(terrain_width/2,0, terrain_height/2 )
 		offset = Vector3.ZERO
 			
 	for row in grid_height:
 		for col in grid_width:
 			
-			# Offset coordinates for rectangle layout
-			var q = col - (row >> 1) -  (grid_width ) / 2 # Offset-q axial coordinate
-			var r = row - (grid_height ) / 2
+			
+			# Convert to centered integer indices
+			var centered_col = col - half_width
+			var centered_row = row - half_height
+
+			# For flat-topped hexes in "odd-r" layout:
+			var q = centered_col - (centered_row >> 1)
+			var r = centered_row
 			
 			var world_pos = axial_to_world(q, r) 
-			world_pos = world_pos-offset
+			#world_pos = world_pos-offset
 			var elevation = await sample_terrain_height(world_pos)
 			
 			var cell = HexCell.new(q,r,elevation,grid_manager)
 			
-			if terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x] and not terrain_mesh.data.get_control_auto(world_pos):
-				cell.terrain_data = terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x]
+			if  !terrain_mesh.data.get_texture_id(world_pos): 
+				if terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x] and not terrain_mesh.data.get_control_auto(world_pos):
+					cell.terrain_data = terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x]
 			else:
 				cell.terrain_data = default_terrain_data
 				
@@ -94,7 +109,8 @@ func generate_grid():
 			cells.append(cell)
 			add_child(cell)
 			
-	_debug_draw_map(cells,offset)
+	if generate_debug_mesh:
+		_debug_draw_map(cells,offset)
 	grid_manager.initialize_from_data(cells)
 	print("total cells ",cells.size())
 func _calculate_grid_dimensions():

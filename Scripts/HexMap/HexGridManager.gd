@@ -45,6 +45,7 @@ var astar_graphs = {}
 
 func _init():
 	instance = self
+	astar = DirectionalAStar.new()
 
 #endregion
 
@@ -272,19 +273,42 @@ func _get_astar_id_from_world(world_pos: Vector3) -> int:
 
 ## Finds path with unit-specific movement rules
 func find_unit_path(unit: Node3D, start: Vector3, end: Vector3) -> Array[HexCell]:
+	if not unit:
+		return []
+	var mobility = unit.mobility_type
+	var graph = astar_graphs.get(mobility, null)
+	if not graph:
+		push_error("No A* graph for mobility type: %d" % mobility)
+		return []
+
 	var start_id = _get_astar_id_from_world(start)
 	var end_id = _get_astar_id_from_world(end)
-	
-	if !astar.has_point(start_id) || !astar.has_point(end_id):
+
+	if not graph.has_point(start_id) or not graph.has_point(end_id):
+		push_error("Pathfinding: start or end point not in graph")
 		return []
-	
-	# Apply unit-specific mobility rules
-	_apply_unit_mobility(unit)
-	var path = astar.get_point_path(start_id, end_id)
-	_reset_mobility()
-	
+
+	var path_ids = graph.get_point_path(start_id, end_id)
+		
+	if path_ids.is_empty():
+		push_error("Path ID is empty")
+		return []
+
+	var path: Array[HexCell] = []
+	for id in path_ids:
+		var coord = _get_coords_from_astar_id(id)
+		var cell = get_cell_at_position(coord)
+		#if cell:
+		path.append(cell)
 	return path
 	
+	
+	
+func _get_coords_from_astar_id(id: Vector3i) -> Vector3i:
+	var offset = 1 << 20
+	var r = (id.y % (1 << 10)) - offset
+	var q = (id.x >> 10) - offset
+	return Vector3i(q,0, r)
 #endregion
 
 #region Unit Management
