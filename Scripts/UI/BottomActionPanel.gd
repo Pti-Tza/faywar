@@ -1,97 +1,112 @@
-# UI/BottomActionPanel.gd
+# BottomActionPanel.gd
+# Displays context-sensitive action buttons for the currently selected unit.
+# Supports core tactical actions (Move, Attack, Brace) and is designed for easy extension.
+#
+# Responsibilities:
+# - Dynamically populate action buttons based on unit state
+# - Enable/disable actions using unit capabilities
+# - Emit intent signals without executing game logic (decoupled design)
+#
+# Dependencies:
+# - Requires valid `Unit` reference via `show_for_unit()`
+# - Relies on `HexGridHighlights` for visual feedback
+# - Assumes `action_button_scene` is a valid Button-based scene with `configure()` method
+
 extends PanelContainer
 class_name BottomActionPanel
 
-## Custom signals
+## Emitted when the player initiates a move action
 signal movement_initiated(unit: Unit)
+## Emitted when the player initiates an attack action
 signal attack_initiated(unit: Unit)
 
-#signal ability_used(ability: AbilityResource)
+@export var end_turn_btn: Button
+@export var core_actions: Container
+@export var abilities: Container
+@export var system_commands: Container
 
+@export var action_button_scene: PackedScene
 
-@export var end_turn_btn : Button
-@export var core_actions : Node
-@export var abilities : Node
-@export var system_commands : Node
+# Action definitions with text, icon, and availability logic
+# Icons are preloaded for performance
 
-# Preloaded resources
-@export var action_button_scene : Node
-
-# Action configuration
-@export var CORE_ACTIONS = {
-    "move": {"text": "Move", "icon": "res://Assets/Textures/UI/move_icon.png"},
-    "attack": {"text": "Attack", "icon": "res://Assets/Textures/UI/attack_icon.png"},
-    "brace": {"text": "Brace", "icon": "res://Assets/Textures/UI/brace_icon.png"}
+const CORE_ACTIONS := {
+	"move": {
+		"text": "Move",
+		"icon": preload("res://Textures/UI/move_icon.png")
+	},
+	"attack": {
+		"text": "Attack",
+		"icon": preload("res://Textures/UI/attack_icon.png")
+	},
+	"brace": {
+		"text": "Brace",
+		"icon": preload("res://Textures/UI/brace_icon.png")
+	}
 }
 
-var current_unit: Unit
+var current_unit: Unit = null
 
+## Shows the action panel for the given unit and populates available actions.
+## @param unit: The tactical unit to display actions for. Must be valid.
 func show_for_unit(unit: Unit) -> void:
-    current_unit = unit
-    visible = true
-    _clear_actions()
-    _populate_core_actions()
-    #_populate_abilities()
-    #_populate_system_commands()
+	if not unit:
+		push_error("BottomActionPanel: Cannot show for null unit")
+		return
 
+	current_unit = unit
+	visible = true
+	_clear_actions()
+	_populate_core_actions()
+
+## Clears all dynamically created action buttons.
 func _clear_actions() -> void:
-    for child in core_actions.get_children():
-        child.queue_free()
-    for child in abilities.get_children():
-        child.queue_free()
-    for child in get_children():
-        child.queue_free()
+	for child in core_actions.get_children():
+		child.queue_free()
+	for child in abilities.get_children():
+		child.queue_free()
+	# Note: Do NOT free children of `self` — only designated containers
 
+## Populates core action buttons based on `CORE_ACTIONS`.
 func _populate_core_actions() -> void:
-    for action_key in CORE_ACTIONS:
-        var btn = action_button_scene.instantiate()
-        btn.configure(
-            CORE_ACTIONS[action_key].text,
-            load(CORE_ACTIONS[action_key].icon),
-            _is_action_available(action_key)
-        )
-        btn.connect("pressed", Callable(self, "_on_core_action_selected").bind(action_key))
-        core_actions.add_child(btn)
+	for action_key in CORE_ACTIONS:
+		var config = CORE_ACTIONS[action_key]
+		var btn = action_button_scene.instantiate()
+		btn.configure(config.text, config.icon, _is_action_available(action_key))
+		btn.pressed.connect(_on_core_action_selected.bind(action_key))
+		core_actions.add_child(btn)
 
-#func _populate_abilities() -> void:
-#    if current_unit.abilities.is_empty():
-#        var label = Label.new()
-#        label.text = "No Abilities Available"
-#        return
-#    
-#        var btn = action_button_scene.instantiate()
-#        btn.configure(
-#            ability.display_name,
-#            load(ability.icon_path),
-#            ability.can_activate(current_unit)
-#        )
-#        btn.connect("pressed", Callable(self, "_on_ability_selected").bind(ability))
-#        abilities.add_child(btn)
-
-#func _populate_system_commands() -> void:
-    
-
+## Determines if a core action is available for the current unit.
+## @param action: Action key (e.g., "move", "attack")
+## @return: True if the action can be performed
 func _is_action_available(action: String) -> bool:
-    match action:
-        "move": return current_unit.remaining_mp > 0
-        "attack": return current_unit.can_attack
-        "brace": return current_unit.can_brace
-    return false
+	if not current_unit:
+		return false
 
+	match action:
+		"move": return current_unit.remaining_mp > 0
+		"attack": return current_unit.can_attack
+		"brace": return current_unit.can_brace
+	return false
+
+## Handles button press for core actions.
+## Emits intent signals and triggers UI/visual feedback.
+## Does NOT execute game logic (decoupled via BattleController).
 func _on_core_action_selected(action: String) -> void:
-    match action:
-        "move":
-            HexGridHighlights.instance.show_movement_range(PlayerController.instance.current_unit)
-            PlayerController.instance.prepare_movement()
-        "attack":
-            HexGridHighlights.instance.show_attack_range(PlayerController.instance.current_unit)
-        "brace":
-            current_unit.activate_brace()
-            PlayerController.instance.end_turn()
-            hide()
-#abilities not implemented yet
-#func _on_ability_selected(ability: AbilityResource) -> void:
-#    ability.activate(current_unit)
-#    Events.emit_signal("ability_used", ability)
-#    hide()
+	if not current_unit:
+		return
 
+	match action:
+		"move":
+			# Use local unit, not PlayerController.instance
+			HexGridHighlights.instance.update_movement_highlights(current_unit)
+			movement_initiated.emit(current_unit)
+
+		"attack":
+			HexGridHighlights.instance.update_attack_highlights(current_unit, null)
+			attack_initiated.emit(current_unit)
+
+		"brace":
+			current_unit.activate_brace()
+			# Note: Turn ending should be handled by BattleController, not UI
+			hide()

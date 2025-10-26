@@ -1,4 +1,6 @@
 extends Node3D
+
+## Test script to test highlightning of hex cells
 class_name HexHoverHighlighter
 
 @export var grid_manager: HexGridManager

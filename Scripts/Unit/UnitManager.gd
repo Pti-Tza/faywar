@@ -35,6 +35,20 @@ func _init():
 	if !hex_grid:
 		hex_grid = HexGridManager.instance
 	instance = self
+	
+func _ready() -> void:
+	# Register pre-placed units in the scene
+	for child in get_children():
+		if child is Unit and not active_units.has(child):
+			_register_unit(child)
+
+func _register_unit(unit: Unit) -> void:
+	if not active_units.has(unit):
+		active_units.append(unit)
+		unit.unit_destroyed.connect(_on_unit_destroyed.bind(unit))
+		# Optional: emit spawn signal for consistency
+		# emit_signal("unit_spawned", unit, unit.position)	
+	
 # --------------------------
 #region Public API
 # --------------------------

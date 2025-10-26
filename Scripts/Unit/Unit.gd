@@ -24,19 +24,41 @@ var sections: Array[UnitSection] = []
 @export var mobility_type: MobilityType = MobilityType.BIPEDAL
 @export var max_elevation_change: int = 2
 
-
+@export var icon: Texture2D
 
 @export var walk_mp: int = 4
 @export var run_mp_bonus: int = 2
 @export var jump_mp: int = 0
 
 @export var team: int = 0
+@export var initiative: float = 1.0
+@export var agility: float = 1.0
+
 
 
 ## Unique identifier system for mission-critical units
 @export var unit_id: String = ""  # "enemy_commander_1"
 
 
+var _cached_controller: BaseController = null
+
+var controller: BaseController:
+	get:
+		if _cached_controller == null:
+			var controllers = BattleController.instance.controllers
+			for ctrl in controllers:
+				if ctrl is BaseController and ctrl.team_index == team:
+					_cached_controller = ctrl
+					break
+		return _cached_controller
+	set(value):
+		if value and value is BaseController:
+			team = value.team_index
+			_cached_controller = value
+		else:
+			push_warning("Attempted to set controller to invalid value: ", value)
+			_cached_controller = null
+			
 # Runtime state 
 var current_heat: float = 0.0 # Current heat level
 

@@ -296,8 +296,8 @@ func find_unit_path(unit: Node3D, start: Vector3, end: Vector3) -> Array[HexCell
 
 	var path: Array[HexCell] = []
 	for id in path_ids:
-		var coord = _get_coords_from_astar_id(id)
-		var cell = get_cell_at_position(coord)
+		#var coord = _get_coords_from_astar_id(id)
+		var cell = get_cell_at_position(id)
 		#if cell:
 		path.append(cell)
 	return path

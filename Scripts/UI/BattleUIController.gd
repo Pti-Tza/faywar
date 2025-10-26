@@ -1,99 +1,135 @@
+# BattleUIController.gd
+# Manages UI state and input during tactical combat.
+# Supports multiple player controllers (non-singleton).
+# Uses a state machine and hex click handler to coordinate interaction.
+
 extends CanvasLayer
 class_name BattleUIController
 
-@onready var unit_status := $UnitStatusPanel
-@onready var bottom_action_panel := $BottomActionPanel
-@onready var initiative := $InitiativeTracker
-@onready var combat_log := $CombatLog
+enum ActionState {
+	IDLE,
+	SELECTING_MOVE_DEST,
+	SELECTING_ATTACK_TARGET
+}
+
+var _current_state: ActionState = ActionState.IDLE
+var _pending_unit: Unit = null
+var _active_controller: BaseController = null  # ← Key change
+
+@export var unit_status : UnitStatusPanel
+@export var bottom_action_panel : BottomActionPanel
+@export var initiative : InitiativeTracker
+@export var combat_log : CombatLog
+
+var click_handler : HexClickHandler
 
 func _ready() -> void:
-    # Connect to game systems
-    UnitManager.instance.unit_selected.connect(_on_unit_selected)
-    MovementSystem.instance.move_executed.connect(_on_movement)
-    AttackSystem.instance.attack_resolved.connect(_on_attack)
-    InitiativeSystem.instance.turn_order_updated.connect(_on_turn_order_updated)
-    
-    # Connect to player controller
-    var player_controller = get_tree().get_first_node_in_group("player_controller")
-    player_controller.action_move_requested.connect(_show_movement_ui)
-    player_controller.action_attack_requested.connect(_show_attack_result)
+	# Connect to game systems
+	BattleController.instance.unit_selected.connect(_on_unit_selected)
+	InitiativeSystem.instance.turn_order_updated.connect(_on_turn_order_updated)
+	BattleController.instance.action_executed.connect(_on_action_executed)
 
-    # Connect UI elements
-    bottom_action_panel.action_selected.connect(_on_action_selected)
-    
-    # Connect game systems
-    BattleController.instance.action_validated.connect(_on_action_validated)
-    BattleController.instance.action_executed.connect(_on_action_executed)
+	# Connect UI action signals
+	bottom_action_panel.movement_initiated.connect(_on_move_requested)
+	bottom_action_panel.attack_initiated.connect(_on_attack_requested)
+
+	# Register for hex clicks
+	click_handler = HexClickHandler.instance
+	
+	if click_handler:
+		click_handler.hex_clicked.connect(_on_hex_clicked)
+	else:
+		push_error("No hex_click_handler")
 
 func _on_unit_selected(unit: Unit) -> void:
-    unit_status.update_display(unit)
-    if unit.controller.team_index == 0:
-        bottom_action_panel.show_for_unit(unit)
+	if not unit or not unit.controller:
+		return
 
-func _show_movement_ui(unit: Unit) -> void:
-    unit_status.update_display(unit)
-    bottom_action_panel.update_actions(unit)
-    HexGridHighlights.instance.update_movement_range(unit)
+	_active_controller = unit.controller
+	unit_status.update_display(unit)
 
-func _show_attack_result(attacker: Unit, target: Unit, weapon: WeaponData) -> void:
-    combat_log.add_entry(
-        "{attacker} attacked {target} with {weapon}".format({
-            "attacker": attacker.unit_data.name,
-            "target": target.unit_data.name,
-            "weapon": weapon.weapon_name
-        }),
-        "combat"
-    )
+	# Show panel only for human-controlled units (e.g., team 0)
+	if unit.team == 0:
+		bottom_action_panel.show_for_unit(unit)
+	else:
+		bottom_action_panel.hide()
 
+	_set_state(ActionState.IDLE)
 
-func _on_action_selected(action_type: String):
-    match action_type:
-        "move":
-            highlight_movement()
-        "attack": 
-            highlight_attack()
-        _:
-            HexGridHighlights.instance.clear_all_highlights()
+# --- Action Requests from UI ---
+func _on_move_requested(unit: Unit) -> void:
+	if not unit or not unit.controller:
+		return
+	_pending_unit = unit
+	_active_controller = unit.controller
+	var reachable = MovementSystem.instance.get_reachable_hexes(unit)
+	HexGridHighlights.instance.update_movement_highlights(reachable)
+	_set_state(ActionState.SELECTING_MOVE_DEST)
 
-func highlight_movement():
-    var unit = BattleController.instance.active_unit
-    var reachable = BattleController.instance.get_movement_range(unit)
-    HexGridHighlights.instance.update_movement_highlights(reachable)
+func _on_attack_requested(unit: Unit) -> void:
+	if not unit or not unit.controller:
+		return
+	_pending_unit = unit
+	_active_controller = unit.controller
+	for weapon in unit.weapons:
+		if weapon.is_operational and weapon.maximum_range > 0:
+			HexGridHighlights.instance.update_attack_highlights(unit, weapon)
+	_set_state(ActionState.SELECTING_ATTACK_TARGET)
 
-func highlight_attack():
-    var unit = BattleController.instance.active_unit
-    var weapons = BattleController.instance.get_available_weapons(unit)
-    
-    for weapon in weapons:
-     HexGridHighlights.instance.update_attack_highlights(unit, weapon)
+# --- Hex Click Handler ---
+func _on_hex_clicked(cell: HexCell) -> void:
+	if not _active_controller or not _pending_unit:
+		return
 
-func _on_action_validated(action: String, valid: bool):
-    if valid:
-        bottom_action_panel.disable_action(action)
-    else:
-        push_error("Invalid action")
+	match _current_state:
+		ActionState.SELECTING_MOVE_DEST:
+			if cell in MovementSystem.instance.get_reachable_hexes(_pending_unit):
+				# Build full path (optional: use pathfinding)
+				var path = [_pending_unit.get_current_cell(), cell]
+				_active_controller.handle_move_input(path)
+				_set_state(ActionState.IDLE)
 
-func _on_action_executed(action: String, result: Dictionary):
-    combat_log.create_log_entry(action, result)
-    HexGridHighlights.instance.clear_all_highlights()
-    bottom_action_panel.reset_actions()
+		ActionState.SELECTING_ATTACK_TARGET:
+			var target_unit = cell.unit
+			if target_unit and TeamManager.instance.are_enemies(_pending_unit.team, target_unit.team):
+				var weapon = _pending_unit.weapons.filter(func(w): return w.is_operational)[0]
+				if weapon:
+					_active_controller.handle_attack_input(target_unit, weapon)
+					_set_state(ActionState.IDLE)
 
+# --- State Management ---
+func _set_state(new_state: ActionState) -> void:
+	_current_state = new_state
+	_pending_unit = null if new_state == ActionState.IDLE else _pending_unit
+	_active_controller = null if new_state == ActionState.IDLE else _active_controller
 
+	if new_state == ActionState.IDLE:
+		HexGridHighlights.instance.clear_all_highlights()
+		bottom_action_panel.hide()
 
-func _on_movement(unit: Unit, path: Array) -> void:
-    unit_status.update_display(unit)
-    combat_log.add_entry("{unit} moved {distance}".format({
-        "unit": unit.unit_data.name,
-        "distance": path.size()
-    }), "movement")
+# --- Action Execution Feedback ---
+func _on_action_executed(action: String, result: Dictionary) -> void:
+	match action:
+		"move":
+			combat_log.add_simple_entry(
+				"{unit} moved {count} hexes".format({
+					"unit": result.unit.unit_data.name,
+					"count": result.path.size()
+				}),
+				"movement"
+			)
+		"attack":
+			var dmg = result.total_damage
+			combat_log.add_simple_entry(
+				"{attacker} → {target}: {dmg} dmg".format({
+					"attacker": result.attacker.unit_data.name,
+					"target": result.target.unit_data.name,
+					"dmg": dmg
+				}),
+				"damage" if dmg > 0 else "miss"
+			)
+	_set_state(ActionState.IDLE)
 
-func _on_attack(result: AttackResult) -> void:
-    var entry = "{attacker} -> {target}: {dmg} dmg".format({
-        "attacker": result.attacker.unit_data.name,
-        "target": result.target.unit_data.name,
-        "dmg": result.total_damage
-    })
-    combat_log.add_entry(entry, "damage" if result.total_damage > 0 else "miss")
-
-func _on_turn_order_updated(order: Array) -> void:
-    initiative.update_turn_order(order)
+# --- System Event Handlers ---
+func _on_turn_order_updated(order: Array[Unit]) -> void:
+	initiative.update_turn_order(order)

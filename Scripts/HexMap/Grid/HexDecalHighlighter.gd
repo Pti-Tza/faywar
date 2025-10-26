@@ -4,7 +4,7 @@ extends Node3D
 @export var decal_scene: PackedScene
 @export var max_active_decals: int = 30
 @export var decal_height_offset: float = 0.1
-@export var _terrain: MeshInstance3D
+
 @export var hex_grid_manager: HexGridManager
 
 var _decals_pool: Array[Decal] = []

@@ -113,10 +113,10 @@ func _compare_units(a: Unit, b: Unit) -> bool:
 	for tiebreaker in tiebreaker_priority:
 		match tiebreaker:
 			"speed":
-				if a.stats.speed != b.stats.speed:
-					return a.stats.speed > b.stats.speed
+				if a.walk_mp != b.walk_mp:
+					return a.walk_mp > b.walk_mp
 			"agility":
-				if a.stats.agility != b.stats.agility:
+				if a.agility != b.agility:
 					return a.stats.agility > b.stats.agility
 			"random":
 				return _rng.randf() > 0.5
