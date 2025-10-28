@@ -10,6 +10,7 @@ static var instance : UnitManager
 signal unit_spawned(unit: Node, position: Vector3)  # Unit created and placed
 signal unit_destroyed(unit: Node, wreckage: Node)    # Unit destroyed + wreck ref
 signal unit_damaged(unit: Node, section: String, damage: int)  # Location-based damage
+signal units_ready()
 
 ### Properties ###
 var active_units: Array = []              # All operational units
@@ -41,13 +42,14 @@ func _ready() -> void:
 	for child in get_children():
 		if child is Unit and not active_units.has(child):
 			_register_unit(child)
+	emit_signal("units_ready")
 
 func _register_unit(unit: Unit) -> void:
 	if not active_units.has(unit):
 		active_units.append(unit)
 		unit.unit_destroyed.connect(_on_unit_destroyed.bind(unit))
 		# Optional: emit spawn signal for consistency
-		# emit_signal("unit_spawned", unit, unit.position)	
+		emit_signal("unit_spawned", unit, unit.position)	
 	
 # --------------------------
 #region Public API

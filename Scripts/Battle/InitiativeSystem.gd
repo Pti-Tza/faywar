@@ -42,33 +42,56 @@ var _prediction_timer: Timer
 
 
 signal round_reset
-signal unit_added
+signal unit_added(unit: Unit)
 signal unit_removed(unit: Unit)
 signal turn_order_updated(_turn_order: Array[Unit])
 
-func _init():
+func _init() -> void:
+	instance = self
+
+func _ready():
+	# Don't await UnitManager here since we'll connect to its signals
 	_prediction_timer = Timer.new()
 	_prediction_timer.wait_time = 0.2
 	_prediction_timer.one_shot = true
+	_prediction_timer.stop()
 	_prediction_timer.timeout.connect(_emit_updated_order)
 	add_child(_prediction_timer)
-	instance = self
+	
 	_rng = RandomNumberGenerator.new()
 	_rng.seed = random_seed
 	
+	
+	UnitManager.instance.connect("unit_spawned", _on_unit_added)
+	UnitManager.instance.connect("unit_destroyed", _on_unit_removed)
+
+	await get_tree().process_frame
+	initialize(UnitManager.instance.active_units)
+
+
+func _on_unit_added(unit: Node, position: Vector3) -> void:
+	if unit is Unit and not _turn_order.has(unit):
+		add_unit(unit)
+
+func _on_unit_removed(unit: Node, wreckage: Node) -> void:
+	if unit is Unit and _turn_order.has(unit) :
+		remove_unit(unit)
+
 func initialize(units : Array):
+	_turn_order = []
 	_turn_order.append_array(units)
 	recalculate_order()
 
 func add_unit(unit: Unit) -> void:
 	if not _turn_order.has(unit):
 		_turn_order.append(unit)
-		_queue_order_update()
-		unit_added.emit(unit)
+		recalculate_order()
+		unit_added.emit()
 
 func remove_unit(unit: Unit) -> void:
 	if unit in _turn_order:
-		_queue_order_update()
+		_turn_order.erase(unit)
+		recalculate_order()
 		unit_removed.emit(unit)
 
 func get_turn_order() -> Array[Unit]:

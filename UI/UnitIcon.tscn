@@ -1,5 +1,23 @@
-[gd_scene format=3 uid="uid://ctmy4n1gfwi0j"]
+[gd_scene load_steps=3 format=3 uid="uid://dsov3fs2uwu3h"]
 
-[node name="Button" type="Button"]
-offset_right = 28.0
-offset_bottom = 22.0
+[ext_resource type="Texture2D" uid="uid://ccinc08txerxi" path="res://icon.svg" id="1_71h4w"]
+[ext_resource type="PackedScene" path="res://UI/UnitIcon old.tscn" id="2_7ppgq"]
+
+[node name="TextureRect" type="TextureRect"]
+self_modulate = Color(1, 1, 1, 0)
+texture = ExtResource("1_71h4w")
+expand_mode = 3
+
+[node name="Button" parent="." instance=ExtResource("2_7ppgq")]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+icon = ExtResource("1_71h4w")
+expand_icon = true

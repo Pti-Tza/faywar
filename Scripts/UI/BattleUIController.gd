@@ -18,7 +18,7 @@ var _active_controller: BaseController = null  # ← Key change
 
 @export var unit_status : UnitStatusPanel
 @export var bottom_action_panel : BottomActionPanel
-@export var initiative : InitiativeTracker
+@export var initiative : InitiativeUITracker
 @export var combat_log : CombatLog
 
 var click_handler : HexClickHandler

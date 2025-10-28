@@ -12,7 +12,7 @@
 # - Relies on `HexGridHighlights` for visual feedback
 # - Assumes `action_button_scene` is a valid Button-based scene with `configure()` method
 
-extends PanelContainer
+extends Control
 class_name BottomActionPanel
 
 ## Emitted when the player initiates a move action

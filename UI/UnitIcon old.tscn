@@ -1,0 +1,5 @@
+[gd_scene load_steps=0 format=3 uid="uid://ctmy4n1gfwi0j"]
+
+[node name="Button" type="Button"]
+offset_right = 28.0
+offset_bottom = 22.0
