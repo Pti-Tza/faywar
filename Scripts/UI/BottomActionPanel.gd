@@ -21,9 +21,7 @@ signal movement_initiated(unit: Unit)
 signal attack_initiated(unit: Unit)
 
 @export var end_turn_btn: Button
-@export var core_actions: Container
-@export var abilities: Container
-@export var system_commands: Container
+@export var actions_container: Container
 
 @export var action_button_scene: PackedScene
 
@@ -38,6 +36,10 @@ const CORE_ACTIONS := {
 	"attack": {
 		"text": "Attack",
 		"icon": preload("res://Textures/UI/attack_icon.png")
+	},
+	"sprint": {
+		"text": "Sprint",
+		"icon": preload("res://Textures/UI/move_icon.png")  # Using move icon as placeholder
 	},
 	"brace": {
 		"text": "Brace",
@@ -58,12 +60,11 @@ func show_for_unit(unit: Unit) -> void:
 	visible = true
 	_clear_actions()
 	_populate_core_actions()
+	_populate_custom_actions()
 
 ## Clears all dynamically created action buttons.
 func _clear_actions() -> void:
-	for child in core_actions.get_children():
-		child.queue_free()
-	for child in abilities.get_children():
+	for child in actions_container.get_children():
 		child.queue_free()
 	# Note: Do NOT free children of `self` — only designated containers
 
@@ -74,7 +75,7 @@ func _populate_core_actions() -> void:
 		var btn = action_button_scene.instantiate()
 		btn.configure(config.text, config.icon, _is_action_available(action_key))
 		btn.pressed.connect(_on_core_action_selected.bind(action_key))
-		core_actions.add_child(btn)
+		actions_container.add_child(btn)
 
 ## Determines if a core action is available for the current unit.
 ## @param action: Action key (e.g., "move", "attack")
@@ -86,6 +87,7 @@ func _is_action_available(action: String) -> bool:
 	match action:
 		"move": return current_unit.remaining_mp > 0
 		"attack": return current_unit.can_attack
+		"sprint": return current_unit.remaining_mp > 1  # Sprint requires more MP
 		"brace": return current_unit.can_brace
 	return false
 
@@ -106,7 +108,29 @@ func _on_core_action_selected(action: String) -> void:
 			HexGridHighlights.instance.update_attack_highlights(current_unit, null)
 			attack_initiated.emit(current_unit)
 
+		"sprint":
+			# Sprint might have special highlighting or behavior
+			HexGridHighlights.instance.update_movement_highlights(current_unit)
+			# Could emit a separate signal for sprint if needed
+			movement_initiated.emit(current_unit)
+
 		"brace":
 			current_unit.activate_brace()
 			# Note: Turn ending should be handled by BattleController, not UI
 			hide()
+
+## Populates custom actions for non-standard units
+func _populate_custom_actions() -> void:
+	if current_unit and current_unit.has_method("get_custom_actions"):
+		var custom_actions = current_unit.get_custom_actions()
+		for action in custom_actions:
+			var btn = action_button_scene.instantiate()
+			btn.configure(action.text, action.icon, action.enabled)
+			btn.pressed.connect(_on_custom_action_selected.bind(action.id))
+			actions_container.add_child(btn)
+
+## Handles button press for custom actions
+func _on_custom_action_selected(action_id: String) -> void:
+	if current_unit and current_unit.has_method("execute_action"):
+		current_unit.execute_action(action_id)
+		hide()
