@@ -50,6 +50,7 @@ func _init() -> void:
 	instance = self
 
 func _ready():
+	await HexGridManager.instance.grid_initialized
 	# Don't await UnitManager here since we'll connect to its signals
 	_prediction_timer = Timer.new()
 	_prediction_timer.wait_time = 0.2

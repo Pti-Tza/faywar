@@ -15,11 +15,13 @@ enum ActionState {
 var _current_state: ActionState = ActionState.IDLE
 var _pending_unit: Unit = null
 var _active_controller: BaseController = null  # ← Key change
+var _active_unit_decal: Decal = null
 
 @export var unit_status : UnitStatusPanel
 @export var bottom_action_panel : BottomActionPanel
 @export var initiative : InitiativeUITracker
 @export var combat_log : CombatLog
+@export var unit_decal_scene: PackedScene
 
 var click_handler : HexClickHandler
 
@@ -28,6 +30,7 @@ func _ready() -> void:
 	BattleController.instance.unit_selected.connect(_on_unit_selected)
 	InitiativeSystem.instance.turn_order_updated.connect(_on_turn_order_updated)
 	BattleController.instance.action_executed.connect(_on_action_executed)
+	BattleController.instance.turn_started.connect(_on_turn_started)
 
 	# Connect UI action signals
 	bottom_action_panel.movement_initiated.connect(_on_move_requested)
@@ -133,3 +136,71 @@ func _on_action_executed(action: String, result: Dictionary) -> void:
 # --- System Event Handlers ---
 func _on_turn_order_updated(order: Array[Unit]) -> void:
 	initiative.update_turn_order(order)
+
+func _on_turn_started(unit: Unit) -> void:
+	_show_active_unit_decal(unit)
+	
+	# Also update the UI to show the active unit's information
+	if unit:
+		_active_controller = unit.controller
+		unit_status.update_display(unit)
+		
+		# Show panel only for human-controlled units (e.g., team 0)
+		if unit.team == 0:
+			bottom_action_panel.show_for_unit(unit)
+		else:
+			bottom_action_panel.hide()
+		
+		_set_state(ActionState.IDLE)
+
+func _show_active_unit_decal(unit: Unit) -> void:
+	# Remove existing decal if present
+	if _active_unit_decal:
+		_active_unit_decal.queue_free()
+		_active_unit_decal = null
+	
+	# Create new decal if we have a unit
+	if unit and unit_decal_scene:
+		_active_unit_decal = unit_decal_scene.instantiate()
+		if _active_unit_decal:
+			# Position the decal at the unit's global position
+			_active_unit_decal.position = unit.global_position + Vector3(0, 0.1, 0)  # Slightly above the unit
+			get_parent().add_child(_active_unit_decal)  # Add to the same parent as this UI controller
+
+			# Set up a timer to continuously update the decal position
+			var update_timer = Timer.new()
+			update_timer.wait_time = 0.1  # Update 10 times per second
+			update_timer.timeout.connect(_update_decal_position.bind(unit, _active_unit_decal))
+			update_timer.autostart = true
+			add_child(update_timer)
+			
+			# Set up a timer to rotate the decal
+			var rotation_timer = Timer.new()
+			rotation_timer.wait_time = 0.05  # Update rotation quickly for smooth effect
+			rotation_timer.timeout.connect(_rotate_decal.bind(_active_unit_decal))
+			rotation_timer.autostart = true
+			add_child(rotation_timer)
+
+func _update_decal_position(unit: Unit, decal: Decal) -> void:
+	if unit and decal and is_instance_valid(unit) and is_instance_valid(decal):
+		# Update the decal's position to match the unit's global position
+		decal.position = unit.global_position + Vector3(0, 0.1, 0)  # Slightly above the unit
+	else:
+		# If unit or decal is no longer valid, stop updating
+		for child in get_children():
+			if child is Timer and child.timeout.is_connected(_update_decal_position):
+				child.stop()
+				child.queue_free()
+				break
+
+func _rotate_decal(decal: Decal) -> void:
+	if decal and is_instance_valid(decal):
+		# Rotate the decal around the Y axis for a spinning effect
+		decal.rotate_y(0.1)  # Rotate by 0.1 radians each update
+	else:
+		# If decal is no longer valid, stop updating
+		for child in get_children():
+			if child is Timer and child.timeout.is_connected(_rotate_decal):
+				child.stop()
+				child.queue_free()
+				break

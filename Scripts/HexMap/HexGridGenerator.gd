@@ -67,8 +67,8 @@ func generate_grid():
 	grid_width = terrain_width / hex_width
 	grid_height = terrain_height / hex_height
 	
-	var half_width = grid_width / 2
-	var half_height = grid_height / 2
+	var half_width : int = grid_width / 2
+	var half_height : int = grid_height / 2
 	
 	var offset :Vector3
 	if auto_size:

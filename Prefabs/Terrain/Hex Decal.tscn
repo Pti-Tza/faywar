@@ -2,6 +2,9 @@
 
 [ext_resource type="Texture2D" uid="uid://sifjonkgcea1" path="res://Textures/Terrain/Hex.png" id="1_vouv2"]
 
-[node name="Decal" type="Decal"]
-size = Vector3(18, 300, 18)
+[node name="HexDecal" type="Decal"]
+size = Vector3(14, 46.113, 14)
 texture_albedo = ExtResource("1_vouv2")
+texture_emission = ExtResource("1_vouv2")
+emission_energy = 2.27
+cull_mask = 1048574

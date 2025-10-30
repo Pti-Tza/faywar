@@ -24,6 +24,7 @@ signal action_executed(action: String, result: Dictionary)
 
 
 signal unit_selected(unit: Unit)
+signal turn_started(unit: Unit)
 signal movement_executed(unit: Unit, path: Array[HexCell])
 
 #endregion
@@ -113,7 +114,7 @@ func _initialize_mission_director() -> void:
 ## Begin combat sequence and initialize turn order
 func _start_combat_sequence() -> void:
 	# Calculate initial initiative order
-	initiative_system.initialize(unit_loader.active_units)
+	#initiative_system.initialize(unit_loader.active_units)
 	# Signal combat start to other systems
 	combat_started.emit()
 	# Begin first unit's turn
@@ -125,6 +126,7 @@ func _process_next_unit() -> void:
 	_active_unit = initiative_system.get_next_unit()
 	# Start unit's turn sequence
 	_start_unit_turn(_active_unit)
+	turn_started.emit(_active_unit)
 	emit_signal("unit_selected", _active_unit)
 
 
