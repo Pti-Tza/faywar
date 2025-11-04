@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="HitProfile" load_steps=2 format=3 uid="uid://d3lfwmebtjync"]
+
+[ext_resource type="Script" uid="uid://s1gftnok3hxp" path="res://Scripts/Unit/HitProfile.gd" id="1_jpi76"]
+
+[resource]
+script = ExtResource("1_jpi76")

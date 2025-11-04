@@ -18,9 +18,8 @@ enum MobilityType {
 
 ## Unit definition with static properties
 @export var unit_name: String = "Unnamed Unit"
+@export var classification: String = "classification"
 var sections: Array[UnitSection] = []
-@export var base_heat_capacity: float = 30.0
-@export var base_heat_dissipation: float = 2.0
 @export var mobility_type: MobilityType = MobilityType.BIPEDAL
 @export var max_elevation_change: int = 2
 
@@ -34,11 +33,15 @@ var sections: Array[UnitSection] = []
 @export var initiative: float = 1.0
 @export var agility: float = 1.0
 
+## Current hex position in 3D (q, r, level)
+@export var current_hex_3d: Vector3i = Vector3i(0, 0, 0)
 
+@export var unit_height: float = 10.0
 
 ## Unique identifier system for mission-critical units
 @export var unit_id: String = ""  # "enemy_commander_1"
-
+@export var heat_system: HeatSystem
+@export var hit_profile: Resource
 
 var _cached_controller: BaseController = null
 
@@ -59,11 +62,58 @@ var controller: BaseController:
 			push_warning("Attempted to set controller to invalid value: ", value)
 			_cached_controller = null
 			
-# Runtime state 
-var current_heat: float = 0.0 # Current heat level
+
 
 # Initialize unit when added to scene tree
 func _ready():
+	sections.clear()
+	for child in get_children():
+		if child is UnitSection:
+			sections.append(child)
+			for component in child.component_handlers:
+				component.component_destroyed.connect(_on_component_destroyed.bind(component.component_data))
+	
+	_connect_signals()
+
+## Gets the current hex cell the unit is occupying
+func get_current_hex_cell() -> HexCell:
+	var hex_grid = HexGridManager.instance
+	if hex_grid:
+		return hex_grid.get_cell_3d(current_hex_3d.x, current_hex_3d.y, current_hex_3d.z)
+	return null
+
+## Sets the unit's hex position in 3D space
+func set_hex_position_3d(q: int, r: int, level: int) -> bool:
+	var hex_grid = HexGridManager.instance
+	if not hex_grid:
+		push_error("No HexGridManager instance found")
+		return false
+	
+	var target_cell = hex_grid.get_cell_3d(q, r, level)
+	if not target_cell:
+		push_error("No hex cell at coordinates (%d, %d, %d)" % [q, r, level])
+		return false
+	
+	if target_cell.unit and target_cell.unit != self:
+		push_error("Target hex is already occupied")
+		return false
+	
+	# Remove from old position
+	var old_cell = get_current_hex_cell()
+	if old_cell:
+		old_cell.unit = null
+	
+	# Update position
+	current_hex_3d = Vector3i(q, r, level)
+	
+	# Place in new position
+	target_cell.unit = self
+	
+	# Update world position
+	var world_pos = hex_grid.axial_to_world_3d(q, r, level)
+	global_position = world_pos
+	
+	return true
 	sections.clear()
 	for child in get_children():
 		if child is UnitSection:
@@ -88,11 +138,8 @@ func apply_damage(section: UnitSection, damage: float) -> void:
 ## Public method to apply heat to the unit
 ## @param heat: float - Amount of heat to add
 func apply_heat(heat: float) -> void:
-	current_heat = clamp(current_heat + heat, 0.0, base_heat_capacity)
-	heat_changed.emit(current_heat)
-	#_check_overheat()
-
-
+	heat_system.add_heat(heat)
+	
 
 # Connect section destruction signals
 func _connect_signals() -> void:
@@ -119,7 +166,14 @@ func get_total_armor() -> int:
 	return sections.reduce(func(acc, s): return acc + s.current_armor, 0)
 
 func get_total_structure() -> int:
-	return sections.reduce(func(acc, s): return acc + s.current_structure, 0)        
+	return sections.reduce(func(acc, s): return acc + s.current_structure, 0) 
+
+func get_total_max_armor() -> int:
+	return sections.reduce(func(acc, s): return acc + s.max_armor, 0)
+
+func get_total_max_structure() -> int:
+	return sections.reduce(func(acc, s): return acc + s.max_structure, 0) 	
+	       
 
 ## Returns the total armor for a specific section
 func get_section_armor(section: String) -> int:
@@ -136,3 +190,11 @@ func get_section_structure(section: String) -> int:
 			return sec.structure
 	push_error("Section not found: ", section)
 	return 0
+
+## Get hit profile based on attack angle
+func get_hit_profile(attack_angle: float) -> Dictionary:
+	if hit_profile and hit_profile.has_method("get_hit_weights_for_angle"):
+		return hit_profile.get_hit_weights_for_angle(attack_angle)
+	else:
+		# Default hit profile if none is set - assumes standard sections exist
+		return {"Front": 25, "Rear": 25, "Left": 25, "Right": 25}

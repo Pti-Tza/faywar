@@ -8,7 +8,10 @@ extends Node3D
 ## Coordinates are managed in axial (q,r) format with cube coordinate validation.
 
 ## Axial coordinates (q, r) - read only after creation
-var axial_coords: Vector2i = Vector2i.ZERO
+var axial_coordss: Vector2i = Vector2i.ZERO
+
+## Level coordinate (z-axis) - 0 = ground level, positive = upper floors, negative = underground
+@export var level: int = 0
 
 
 # Helper properties
@@ -16,17 +19,23 @@ var q: int : get = get_q
 var r: int : get = get_r
 
 func get_q() -> int:
-	return axial_coords.x
+	return axial_coordss.x
 
 func get_r() -> int:
-	return axial_coords.y
+	return axial_coordss.y
+
+## Coordinate property that includes level
+var axial_coords_with_level: Vector3i:
+	get:
+		return Vector3i(axial_coordss.x, axial_coordss.y, level)
 
 var _global_position: Vector3:
 	get:
 		var base_pos = HexGridManager.instance.axial_to_world(q, r)
+		var level_height = HexGridManager.instance.level_height_step * level if HexGridManager.instance else 0.0
 		return Vector3(
 			base_pos.x,
-			elevation,
+			elevation + level_height,
 			base_pos.z
 		)
 
@@ -43,7 +52,6 @@ var grid_manager: HexGridManager
 @export var elevation: float :
 	set(value):
 		elevation = value
-		# Update vertical position using height step
 		position.y = elevation 
 		# Notify systems of elevation change
 		elevation_changed.emit(elevation)
@@ -70,15 +78,33 @@ var unit: Node3D = null :
 		unit = value
 		occupancy_changed.emit(unit)
 
+## Type of structure for multi-level features
+@export var structure_type: StructureType = StructureType.GROUND
+
 ## Type of cover provided by this cell
 var cover: CoverType = CoverType.NONE :
 	set(value):
 		cover = value
 		cover_changed.emit(cover)
 
+## Array of levels this cell connects to (for stairs, elevators, bridges)
+@export var connects_to_levels: Array[int] = []
+
 
 var neighbors:Array[HexCell] = []
 var lab : Label3D
+
+## Structure type classification system for multi-level features
+enum StructureType {
+	GROUND,      ## Standard ground level
+	BRIDGE,      ## Elevated bridge connecting hexes
+	FLOOR,       ## Building floor
+	TUNNEL,      ## Underground tunnel
+	STAIRS_UP,   ## Stairs going up
+	STAIRS_DOWN, ## Stairs going down
+	ELEVATOR,    ## Vertical transport between levels
+	ROOFTOP      ## Rooftop access
+}
 
 ## Cover type classification system
 enum CoverType {
@@ -108,24 +134,19 @@ signal cover_changed(new_cover: CoverType)
 
 	
 	
-func _init(q2: int, r2: int, e: float = 0, manager: HexGridManager = null) -> void:
+func _init(q2: int, r2: int, e: float = 0, manager: HexGridManager = null, world_pos: Vector3 = Vector3.ZERO, cell_level: int = 0) -> void:
 	if not manager:
 		grid_manager = HexGridManager.instance
 	else:
 		grid_manager=manager
 	
-	
-	axial_coords = Vector2i(q2, r2)
+	position = world_pos
+	axial_coordss = Vector2i(q2, r2)
 	elevation = e
+	level = cell_level
 	name = "HexCell(%d,%d,%d)" % [q2, r2, e]
-	#print(name+ " initialized")
+
 	
-	#lab = Label3D.new()
-	#lab.font_size = 800
-	#lab.text = "(%d,%d,%d)" % [q2, r2,e]
-	#lab.position =  Vector3(0,3,0)
-	#lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	#add_child(lab)
 	
 ## Calculates movement cost for a unit type
 ## [br][param mobility_type]: Unit's movement capability type

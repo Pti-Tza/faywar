@@ -56,7 +56,7 @@ func _register_unit(unit: Unit) -> void:
 # --------------------------
 
 ## Spawns a unit using BattleTech unit profile data
-## @param profile: UnitData - Contains stats/configuration
+
 ## @param spawn_hex: Vector3i - Initial grid position
 ## @param team: int - Controlling faction/player
 func spawn_unit(unit_scene: PackedScene, spawn_hex: Vector3i, team: int = -1, id: String = "") -> Node:
@@ -78,7 +78,7 @@ func spawn_unit(unit_scene: PackedScene, spawn_hex: Vector3i, team: int = -1, id
 	unit.unit_destroyed.connect(_on_unit_destroyed.bind(unit))
 	
 	# Set initial battlefield position
-	hex_grid.place_unit(unit, spawn_hex.x, spawn_hex.y)
+	hex_grid.place_unit(unit, spawn_hex.x, spawn_hex.z)
 	
 	emit_signal("unit_spawned", unit, spawn_hex)
 	print("unit spawned ", unit.name)
@@ -96,12 +96,6 @@ func get_units_by_team(team: int, include_destroyed: bool = false) -> Array:
 	return source.filter(func(u): return u.team == team)
 
 
-## Finds units in a specific hex location
-## @param hex: Vector3i - Grid coordinates to check
-## @param include_wreckage: bool - Whether to count destroyed units
-func get_units_in_hex(hex: Vector3i, include_wreckage: bool = false) -> Array:
-	var source = active_units + (destroyed_units if include_wreckage else [])
-	return source.filter(func(u): return hex_grid.world_to_hex(u.position) == hex)
 
 #endregion
 

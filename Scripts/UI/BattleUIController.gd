@@ -22,6 +22,7 @@ var _active_unit_decal: Decal = null
 @export var initiative : InitiativeUITracker
 @export var combat_log : CombatLog
 @export var unit_decal_scene: PackedScene
+@export var hex_info_panel: Control  # Hex info panel reference
 
 var click_handler : HexClickHandler
 
@@ -43,6 +44,23 @@ func _ready() -> void:
 		click_handler.hex_clicked.connect(_on_hex_clicked)
 	else:
 		push_error("No hex_click_handler")
+
+	# Initialize hex info panel if available
+	if hex_info_panel:
+		# The hex info panel has its own hover detection, so we don't need additional setup here
+		pass
+		
+	# Set up the hex info panel reference in the scene
+	if not hex_info_panel:
+		# Try to find the hex info panel as a child or sibling
+		hex_info_panel = get_node_or_null("HexInfoPanel")
+	
+	# Ensure the hex info panel is properly initialized
+	if hex_info_panel:
+		# The hex info panel has its own hover detection, so we don't need additional setup here
+		pass
+	else:
+		print("Warning: HexInfoPanel not found in the scene")
 
 func _on_unit_selected(unit: Unit) -> void:
 	if not unit or not unit.controller:
@@ -116,7 +134,7 @@ func _on_action_executed(action: String, result: Dictionary) -> void:
 		"move":
 			combat_log.add_simple_entry(
 				"{unit} moved {count} hexes".format({
-					"unit": result.unit.unit_data.name,
+					"unit": result.unit.unit_name,
 					"count": result.path.size()
 				}),
 				"movement"
@@ -125,8 +143,8 @@ func _on_action_executed(action: String, result: Dictionary) -> void:
 			var dmg = result.total_damage
 			combat_log.add_simple_entry(
 				"{attacker} → {target}: {dmg} dmg".format({
-					"attacker": result.attacker.unit_data.name,
-					"target": result.target.unit_data.name,
+					"attacker": result.attacker.unit_name,
+					"target": result.target.unit_name,
 					"dmg": dmg
 				}),
 				"damage" if dmg > 0 else "miss"

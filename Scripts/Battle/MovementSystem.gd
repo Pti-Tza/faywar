@@ -67,10 +67,10 @@ func validate_move(unit: Unit, target_hex: HexCell) -> Dictionary:
 	for i in range(1, path.size()):
 		var prev_hex = hex_grid.get_cell(path[i - 1].x, path[i - 1].y)
 		var curr_hex = hex_grid.get_cell(path[i].x, path[i].y)
-		total_cost += curr_hex.get_movement_cost(unit.unit_data.mobility_type)
+		total_cost += curr_hex.get_movement_cost(unit.mobility_type)
 		total_cost += _calculate_elevation_cost(prev_hex, curr_hex)
 		
-		if curr_hex.terrain_data.is_impassable:
+		if curr_hex.terrain_data.is_impassable_for(unit.mobility_type):
 			return { "valid": false, "reason": "Path contains impassable terrain", "cost": 0.0 }
 	
 	# Check remaining movement points
@@ -93,7 +93,7 @@ func execute_move(unit: Unit, target_hex: HexCell) -> bool:
 	
 	# Update unit state
 	unit.remaining_mp -= validation.cost
-	_movement_paths[unit.uuid] = hex_grid.find_unit_path(unit, unit.current_hex, target_hex.axial_coord)
+	_movement_paths[unit.uuid] = hex_grid.find_unit_path(unit, unit.current_hex, target_hex.axial_coords)
 	
 	# Begin movement animation/processing
 	movement_started.emit(unit, _movement_paths[unit.uuid])
@@ -121,7 +121,7 @@ func finalize_movement(unit: Unit) -> void:
 # @param unit: Unit to check
 # @return: Array[HexCell] - Valid destination hexes
 # MovementSystem.gd - Dijkstra's Implementation
-func get_available_hexes(unit: Unit) -> Array[HexCell]:
+func get_reachable_hexes(unit: Unit) -> Array[HexCell]:
 	var costs = {}
 	var pq = PriorityQueue.new()
 	var start_pos = unit.grid_position
@@ -138,7 +138,7 @@ func get_available_hexes(unit: Unit) -> Array[HexCell]:
 		var r = current.y
 		
 		for neighbor in hex_grid.get_neighbors(q, r):
-			var neighbor_pos = neighbor.axial_coord
+			var neighbor_pos = neighbor.axial_coords
 			var move_cost = neighbor.get_movement_cost(unit.mobility_type)
 			var total_cost = costs[current] + move_cost
 			
@@ -159,15 +159,10 @@ func _calculate_elevation_cost(from_cell: HexCell, to_cell: HexCell) -> float:
 
 #--- Helper Methods ---
 
-### 
-# Get unit's current hex coordinates
-func get_unit_hex(unit: Unit) -> Vector3i:
-	return hex_grid.get_unit_cell(unit).axial_coord
-###
 
 ### 
 # Reset movement state after turn
 func reset_movement(unit: Unit) -> void:
-	unit.remaining_mp = unit.unit_data.base_movement
+	unit.remaining_mp = unit.base_movement
 	_movement_paths.erase(unit.uuid)
 ###

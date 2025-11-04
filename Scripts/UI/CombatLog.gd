@@ -70,7 +70,7 @@ func create_log_entry(action: String, result: Dictionary) -> Dictionary:
 func _format_move_message(result: Dictionary) -> String:
 	return "[{time}] {unit} moved {count} hexes using {mp} MP".format({
 		"time": _get_formatted_time(),
-		"unit": result.unit.unit_data.name,
+		"unit": result.unit.unit_name,
 		"count": result.path.size(),
 		"mp": result.mp_cost
 	})
@@ -79,8 +79,8 @@ func _format_attack_message(result: Dictionary) -> String:
 	var crit_text = " (Critical!)" if result.critical_hits > 0 else ""
 	return "[{time}] {attacker} -> {target}: {damage} dmg{crit}".format({
 		"time": _get_formatted_time(),
-		"attacker": result.attacker.unit_data.name,
-		"target": result.target.unit_data.name,
+		"attacker": result.attacker.unit_name,
+		"target": result.target.unit_name,
 		"damage": result.total_damage,
 		"crit": crit_text
 	})
@@ -88,9 +88,9 @@ func _format_attack_message(result: Dictionary) -> String:
 func _format_ability_message(result: Dictionary) -> String:
 	return "[{time}] {unit} used {ability} on {targets}".format({
 		"time": _get_formatted_time(),
-		"unit": result.source.unit_data.name,
+		"unit": result.source.unit_name,
 		"ability": result.ability_name,
-		"targets": result.targets.map(func(t): return t.unit_data.name).join(", ")
+		"targets": result.targets.map(func(t): return t.unit_name).join(", ")
 	})
 
 func _get_formatted_time() -> String:

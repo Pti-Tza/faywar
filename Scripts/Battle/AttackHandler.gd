@@ -32,7 +32,7 @@ func calculate_attack_angle(attacker: Unit, target: Unit) -> float:
 
 func determine_hit_location(target: Unit, attack_angle: float) -> String:
 	var facing = _get_relative_facing(attack_angle)
-	var profile = target.unit_data.get_hit_profile(facing)
+	var profile = target.hit_profile.get_hit_profile(attack_angle)
 	return _roll_hit_location(profile)
 
 

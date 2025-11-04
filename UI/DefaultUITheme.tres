@@ -1,0 +1,23 @@
+[gd_resource type="Theme" load_steps=4 format=3 uid="uid://b5p40ca83b74a"]
+
+[ext_resource uid="uid://b5p4zb983b74b" type="Font" path="res://Fonts/DefaultFont.tres"]
+[ext_resource uid="uid://b5p4zb983b74c" type="StyleBox" path="res://UI/DefaultPanel.tres"]
+
+[resource]
+theme_node_types/Label = [Node, Control]
+
+[theme_data/font/Label]
+default_font = ExtResource("uid://b5p4zb983b74b")
+
+[theme_data/font_sizes/Label]
+default_font_size = 14
+
+[theme_data/colors/Label]
+font_color = Color(0.901961, 0.901961, 0.901961, 1)
+font_color_shadow = Color(0, 0, 0, 0.5)
+
+[theme_data/styles/Label]
+normal = ExtResource("uid://b5p4zb983b74c")
+
+[theme_data/constants/Label]
+outline_size = 1

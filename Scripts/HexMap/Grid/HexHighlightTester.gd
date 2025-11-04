@@ -35,7 +35,7 @@ func _prepare_test_data():
 		"circle":
 			var center = hex_grid_manager.get_cell(10, 10)
 			if center:
-				_test_cells = hex_grid_manager.get_cells_in_range(center.axial_coord, test_radius)
+				_test_cells = hex_grid_manager.get_cells_in_range(center.axial_coords, test_radius)
 		
 		"random":
 			var all_cells = hex_grid_manager.cells

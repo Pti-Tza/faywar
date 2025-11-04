@@ -220,8 +220,8 @@ func validate_turn_ownership(details: Dictionary) -> bool:
 	
 	# Debug logging
 	if not is_owner:
-		var active_name = _active_unit.unit_data.name
-		var attempt_name = details.unit.unit_data.name
+		var active_name = _active_unit.unit_name
+		var attempt_name = details.unit.unit_name
 		push_warning("Turn violation: %s attempted action during %s's turn" % [attempt_name, active_name])
 	
 	return is_owner
@@ -244,7 +244,7 @@ func _handle_move_action(details: Dictionary) -> void:
 		movement_system.execute_move(_active_unit, details.path)
 		emit_signal("movement_executed", _active_unit, details.path)
 	else:
-		push_warning("Invalid move path for ", _active_unit.unit_data.name)
+		push_warning("Invalid move path for ", _active_unit.unit_name)
 
 func _handle_attack_action(details: Dictionary) -> void:
 	var target = details.target
@@ -252,7 +252,7 @@ func _handle_attack_action(details: Dictionary) -> void:
 	if attack_system.validate_attack(_active_unit, target, weapon):
 		attack_system.resolve_attack(_active_unit, target, weapon)
 	else:
-		push_warning("Invalid attack from ", _active_unit.unit_data.name)
+		push_warning("Invalid attack from ", _active_unit.unit_name)
 
 func _handle_ability_action(details: Dictionary) -> void:
 	# Implement ability-specific logic

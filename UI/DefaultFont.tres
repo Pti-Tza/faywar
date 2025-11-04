@@ -1,0 +1,5 @@
+[gd_resource type="FontFile" load_steps=1 format=3 uid="uid://b5p40ca83b74b"]
+
+[resource]
+font_path = "res://Fonts/DejaVuSans.ttf"
+font_name = "DejaVu Sans"

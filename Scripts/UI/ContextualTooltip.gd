@@ -110,8 +110,8 @@ func _get_unit_tooltip(unit: Unit) -> String:
 [Heat] {heat}
 [Movement] {mp}
 ----------------------------""".format({
-        "name": unit.unit_data.display_name,
-        "class": unit.unit_data.classification,
+        "name": unit.display_name,
+        "class": unit.classification,
         "armor": _format_armor(unit),
         "structure": _format_structure(unit),
         "heat": _format_heat(unit),
@@ -143,12 +143,12 @@ func _get_unit_tooltip(unit: Unit) -> String:
 # Helper functions
 func _format_armor(unit: Unit) -> String:
     var total = unit.get_total_armor()
-    var _max = unit.unit_data.total_armor
+    var _max = unit.get_total_max_armor()
     return "%d/%d" % [total, _max]
 
 func _format_structure(unit: Unit) -> String:
     var total = unit.get_total_structure()
-    var _max = unit.unit_data.total_structure
+    var _max = unit.get_total_max_structure()
     return "%d/%d" % [total, _max]
 
 func _format_heat(unit: Unit) -> String:

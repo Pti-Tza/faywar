@@ -40,7 +40,13 @@ var grid_height: int = 10
 }
 
 var cells: Array[HexCell] = []
-var terrain_size 
+var terrain_size
+
+# Multi-level generation parameters
+@export var max_levels: int = 5  # Maximum number of levels to generate
+@export var level_spacing: float = 3.0  # Vertical spacing between levels
+@export var enable_multi_level_generation: bool = false  # Toggle for multi-level generation
+
 func _ready() -> void:
 	
 	if gen_on_start:
@@ -53,19 +59,17 @@ func _process(delta: float) -> void:
 		generate_grid()
 
 func generate_grid():
-	clear_child() 
+	clear_child()
 	await get_tree().process_frame
 	if auto_size:
 		_calculate_grid_dimensions()
 	
 	# Hex layout calculations
-	
-	
 	var hex_width = cell_size * sqrt(3)
 	var hex_height = cell_size * 1.5
 	
-	grid_width = terrain_width / hex_width
-	grid_height = terrain_height / hex_height
+	grid_width = int(terrain_width / hex_width)
+	grid_height = int(terrain_height / hex_height)
 	
 	var half_width : int = grid_width / 2
 	var half_height : int = grid_height / 2
@@ -77,10 +81,53 @@ func generate_grid():
 	else:
 		#offset = Vector3(terrain_width/2,0, terrain_height/2 )
 		offset = Vector3.ZERO
-			
-	for row in grid_height:
-		for col in grid_width:
-			
+	
+	# Generate cells for multiple levels if enabled
+	if enable_multi_level_generation:
+		for level in range(max_levels):
+			_generate_level_cells(half_width, half_height, level, offset)
+	else:
+		# Generate only ground level cells (existing behavior)
+		for row in range(grid_height):
+			for col in range(grid_width):
+				
+				
+				# Convert to centered integer indices
+				var centered_col = col - half_width
+				var centered_row = row - half_height
+
+				# For flat-topped hexes in "odd-r" layout:
+				var q = centered_col - (centered_row >> 1)
+				var r = centered_row
+				
+				var world_pos = axial_to_world(q, r)
+				#world_pos = world_pos-offset
+				var elevation = await sample_terrain_height(world_pos)
+				
+				var cell = HexCell.new(q, r, elevation, grid_manager, Vector3.ZERO, 0)  # Level 0 for ground level
+				
+				if terrain_mesh.data.get_texture_id(world_pos) != null:
+					if terrain_datas.size() > int(terrain_mesh.data.get_texture_id(world_pos).x) and terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)] != null and not terrain_mesh.data.get_control_auto(world_pos):
+						cell.terrain_data = terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)]
+				else:
+					cell.terrain_data = default_terrain_data
+					
+				if get_terrain_slope_angle(world_pos) > 40:
+					cell.terrain_data = slope_terrain_data
+				cell.position = grid_manager.axial_to_world_3d(q, r, 0)  # Position with level 0 using HexGridManager function
+				cell.elevation = elevation
+				cells.append(cell)
+				add_child(cell)
+	
+	if generate_debug_mesh:
+		_debug_draw_map(cells,offset)
+	grid_manager.initialize_from_data(cells)
+	print("total cells ",cells.size())
+
+## Generate cells for a specific level
+func _generate_level_cells(half_width: int, half_height: int, level: int, offset: Vector3):
+	for row in range(grid_height):
+		for col in range(grid_width):
 			
 			# Convert to centered integer indices
 			var centered_col = col - half_width
@@ -90,29 +137,50 @@ func generate_grid():
 			var q = centered_col - (centered_row >> 1)
 			var r = centered_row
 			
-			var world_pos = axial_to_world(q, r) 
-			#world_pos = world_pos-offset
-			var elevation = await sample_terrain_height(world_pos)
+			var world_pos = axial_to_world(q, r)
+			# Adjust world position for level height
+			var level_elevation = await sample_terrain_height(world_pos)
+			var level_world_pos = Vector3(world_pos.x, level_elevation + (level * level_spacing), world_pos.z)
 			
-			var cell = HexCell.new(q,r,elevation,grid_manager)
+			var cell = HexCell.new(q, r, level_elevation, grid_manager, Vector3.ZERO, level)
 			
-			if  !terrain_mesh.data.get_texture_id(world_pos): 
-				if terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x] and not terrain_mesh.data.get_control_auto(world_pos):
-					cell.terrain_data = terrain_datas[terrain_mesh.data.get_texture_id(world_pos).x]
+			# For higher levels, terrain data might be different based on structure
+			if level == 0:  # Ground level
+				if terrain_mesh.data.get_texture_id(world_pos) != null:
+					if terrain_datas.size() > int(terrain_mesh.data.get_texture_id(world_pos).x) and terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)] != null and not terrain_mesh.data.get_control_auto(world_pos):
+						cell.terrain_data = terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)]
+				else:
+					cell.terrain_data = default_terrain_data
+					
+				if get_terrain_slope_angle(world_pos) > 40:
+					cell.terrain_data = slope_terrain_data
 			else:
-				cell.terrain_data = default_terrain_data
-				
-			if get_terrain_slope_angle(world_pos) > 40:
-				cell.terrain_data = slope_terrain_data	
-			cell.position = world_pos
-			cell.elevation= elevation
+				# For upper levels, determine appropriate terrain based on structure type
+				# This is a simplified approach - in a real implementation, you'd have specific rules for bridges, floors, etc.
+				var underlying_cell = _get_ground_level_cell(q, r)
+				if underlying_cell:
+					# Copy terrain data from underlying cell for simple structures
+					cell.terrain_data = underlying_cell.terrain_data
+					# Set structure type based on level
+					if level == 1:
+						cell.structure_type = HexCell.StructureType.BRIDGE
+					elif level > 1:
+						cell.structure_type = HexCell.StructureType.FLOOR  # Using correct enum value from HexCell
+				else:
+					cell.terrain_data = default_terrain_data
+					
+			# Set position with proper 3D coordinates
+			cell.position = grid_manager.axial_to_world_3d(q, r, level)
+			cell.elevation = level_elevation  # Fixed variable name
 			cells.append(cell)
 			add_child(cell)
-			
-	if generate_debug_mesh:
-		_debug_draw_map(cells,offset)
-	grid_manager.initialize_from_data(cells)
-	print("total cells ",cells.size())
+
+## Helper function to get ground level cell at specific coordinates
+func _get_ground_level_cell(q: int, r: int) -> HexCell:
+	for cell in cells:
+		if cell.q == q and cell.r == r and cell.level == 0:
+			return cell
+	return null
 func _calculate_grid_dimensions():
 	if !terrain_mesh:
 		push_error("No terrain mesh assigned!")
@@ -240,7 +308,7 @@ func _draw_terrain_surface(im: ImmediateMesh, _cells: Array, color: Color, _hex_
 	# Battletech-standard hex visualization
 	for cell in _cells:
 		var center = axial_to_world(cell.q, cell.r) - offset
-		var elevation = cell.elevation * grid_manager.elevation_step
+		var elevation = cell.elevation * grid_manager.level_height_step
 		
 		for i in 6:
 			var angle = deg_to_rad(60 * i + 30)  # Official BT rotation

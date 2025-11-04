@@ -1,0 +1,3 @@
+Use strong typing if possible
+use context7 and godot mcp
+Do not use godot $ operator or get_node() for UI,it might break then changing UI Layout, use @export
