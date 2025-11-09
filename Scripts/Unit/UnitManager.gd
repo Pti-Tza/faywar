@@ -38,6 +38,9 @@ func _init():
 	instance = self
 	
 func _ready() -> void:
+	if !hex_grid:
+		hex_grid = HexGridManager.instance
+	instance = self
 	# Register pre-placed units in the scene
 	for child in get_children():
 		if child is Unit and not active_units.has(child):
@@ -78,7 +81,7 @@ func spawn_unit(unit_scene: PackedScene, spawn_hex: Vector3i, team: int = -1, id
 	unit.unit_destroyed.connect(_on_unit_destroyed.bind(unit))
 	
 	# Set initial battlefield position
-	hex_grid.place_unit(unit, spawn_hex.x, spawn_hex.z)
+	hex_grid.place_unit(unit, spawn_hex.x, spawn_hex.z,spawn_hex.y)
 	
 	emit_signal("unit_spawned", unit, spawn_hex)
 	print("unit spawned ", unit.name)
@@ -114,7 +117,7 @@ func _on_unit_destroyed(unit: Unit) -> void:
 	
 	# Position wreckage and update grid
 	wreckage.position = unit.position
-	hex_grid.update_terrain(unit.grid_position, "Wreckage")
+	hex_grid.update_terrain(unit.current_hex, "Wreckage")
 	
 	# Update registries
 	active_units.erase(unit)

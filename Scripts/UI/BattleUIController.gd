@@ -22,9 +22,11 @@ var _active_unit_decal: Decal = null
 @export var initiative : InitiativeUITracker
 @export var combat_log : CombatLog
 @export var unit_decal_scene: PackedScene
-@export var hex_info_panel: Control  # Hex info panel reference
+@export var hex_info_panel: Control # Hex info panel reference
+@export var hex_hover_highlighter: HexHoverHighlighter  # Reference to hover highlighter
 
 var click_handler : HexClickHandler
+
 
 func _ready() -> void:
 	# Connect to game systems
@@ -61,6 +63,18 @@ func _ready() -> void:
 		pass
 	else:
 		print("Warning: HexInfoPanel not found in the scene")
+	
+	# Set up the hex hover highlighter reference
+	if not hex_hover_highlighter:
+		# Try to find the hex hover highlighter in the scene
+		hex_hover_highlighter = get_node_or_null("HexHoverHighlighter")
+		if not hex_hover_highlighter:
+			# Try to get it from the scene root or other common locations
+			var hover_node = get_tree().root.get_node_or_null("HexHoverHighlighter")
+			if hover_node:
+				hex_hover_highlighter = hover_node as HexHoverHighlighter
+
+	await get_tree().process_frame
 
 func _on_unit_selected(unit: Unit) -> void:
 	if not unit or not unit.controller:
@@ -84,7 +98,7 @@ func _on_move_requested(unit: Unit) -> void:
 	_pending_unit = unit
 	_active_controller = unit.controller
 	var reachable = MovementSystem.instance.get_reachable_hexes(unit)
-	HexGridHighlights.instance.update_movement_highlights(reachable)
+	HexDecalHighlighter.instance.highlight_cells(reachable)
 	_set_state(ActionState.SELECTING_MOVE_DEST)
 
 func _on_attack_requested(unit: Unit) -> void:
@@ -94,7 +108,7 @@ func _on_attack_requested(unit: Unit) -> void:
 	_active_controller = unit.controller
 	for weapon in unit.weapons:
 		if weapon.is_operational and weapon.maximum_range > 0:
-			HexGridHighlights.instance.update_attack_highlights(unit, weapon)
+			HexDecalHighlighter.instance.update_attack_highlights(unit, weapon)
 	_set_state(ActionState.SELECTING_ATTACK_TARGET)
 
 # --- Hex Click Handler ---
@@ -125,8 +139,15 @@ func _set_state(new_state: ActionState) -> void:
 	_active_controller = null if new_state == ActionState.IDLE else _active_controller
 
 	if new_state == ActionState.IDLE:
-		HexGridHighlights.instance.clear_all_highlights()
-		bottom_action_panel.hide()
+		HexDecalHighlighter.instance.clear_highlights()
+		# Enable hover highlighting when in IDLE state
+		if hex_hover_highlighter:
+			hex_hover_highlighter.enabled = true
+		#bottom_action_panel.hide()
+	else:
+		# Disable hover highlighting when in other states
+		if hex_hover_highlighter:
+			hex_hover_highlighter.enabled = false
 
 # --- Action Execution Feedback ---
 func _on_action_executed(action: String, result: Dictionary) -> void:

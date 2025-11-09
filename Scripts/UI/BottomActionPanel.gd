@@ -20,6 +20,9 @@ signal movement_initiated(unit: Unit)
 ## Emitted when the player initiates an attack action
 signal attack_initiated(unit: Unit)
 
+## Emitted when the player chooses to end their turn
+signal turn_ended(unit: Unit)
+
 @export var end_turn_btn: Button
 @export var actions_container: Container
 
@@ -71,11 +74,67 @@ func _clear_actions() -> void:
 ## Populates core action buttons based on `CORE_ACTIONS`.
 func _populate_core_actions() -> void:
 	for action_key in CORE_ACTIONS:
-		var config = CORE_ACTIONS[action_key]
-		var btn = action_button_scene.instantiate()
-		btn.configure(config.text, config.icon, _is_action_available(action_key))
-		btn.pressed.connect(_on_core_action_selected.bind(action_key))
-		actions_container.add_child(btn)
+		var button_config = _get_button_config(action_key)
+		if button_config:
+			_create_and_add_button(button_config)
+
+## Gets the configuration for a button based on action key and unit state
+func _get_button_config(action_key: String) -> Dictionary:
+	# Special case: if unit can't brace, show end turn button instead of brace button
+	if action_key == "brace" and not _is_action_available("brace"):
+		return {
+			"text": "End Turn",
+			"icon": preload("res://Textures/UI/brace_icon.png"), # Using brace icon as placeholder
+			"enabled": true,
+			"action": "end_turn"
+		}
+	
+	# Normal case: return the standard configuration for the action
+	var config = CORE_ACTIONS[action_key]
+	return {
+		"text": config.text,
+		"icon": config.icon,
+		"enabled": _is_action_available(action_key),
+		"action": action_key
+	}
+
+## Creates and configures a button based on the provided configuration
+func _create_and_add_button(config: Dictionary) -> void:
+	var btn = action_button_scene.instantiate()
+	
+	# Find the actual ActionButton if it's nested in the scene
+	var action_button = _find_action_button(btn)
+	if action_button:
+		action_button.configure(config.text, config.icon, config.enabled)
+		
+		# Connect the appropriate signal based on the action
+		if config.action == "end_turn":
+			action_button.pressed.connect(_on_end_turn_selected)
+		else:
+			action_button.pressed.connect(_on_core_action_selected.bind(config.action))
+	
+	actions_container.add_child(btn)
+
+## Finds an ActionButton in the instantiated scene, searching recursively through children
+func _find_action_button(node) -> Node:
+	if node is ActionButton:
+		return node
+	
+	for child in node.get_children():
+		var result = _find_action_button(child)
+		if result:
+			return result
+	
+	return null
+
+## Handles end turn button press
+func _on_end_turn_selected() -> void:
+	if current_unit:
+		# Hide the panel and end the turn
+		hide()
+		# Emit a signal to indicate turn ending, or call BattleController directly
+		# This would typically be connected to BattleController to end the turn
+		turn_ended.emit(current_unit)
 
 ## Determines if a core action is available for the current unit.
 ## @param action: Action key (e.g., "move", "attack")
@@ -100,20 +159,12 @@ func _on_core_action_selected(action: String) -> void:
 
 	match action:
 		"move":
-			# Use local unit, not PlayerController.instance
-			HexGridHighlights.instance.update_movement_highlights(current_unit)
 			movement_initiated.emit(current_unit)
-
 		"attack":
-			HexGridHighlights.instance.update_attack_highlights(current_unit, null)
 			attack_initiated.emit(current_unit)
-
 		"sprint":
-			# Sprint might have special highlighting or behavior
-			HexGridHighlights.instance.update_movement_highlights(current_unit)
 			# Could emit a separate signal for sprint if needed
 			movement_initiated.emit(current_unit)
-
 		"brace":
 			current_unit.activate_brace()
 			# Note: Turn ending should be handled by BattleController, not UI

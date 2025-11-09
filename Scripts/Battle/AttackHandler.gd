@@ -19,8 +19,8 @@ func resolve_attack(attacker: Unit, target: Unit, weapon: WeaponData) -> AttackR
 # region Core Calculation Methods -------------------------------------------------
 
 func calculate_attack_angle(attacker: Unit, target: Unit) -> float:
-	var attacker_pos = hex_grid.get_world_position(attacker.grid_position)
-	var target_pos = hex_grid.get_world_position(target.grid_position)
+	var attacker_pos = hex_grid.axial_to_world(attacker.current_hex.x, attacker.current_hex.y)
+	var target_pos = hex_grid.axial_to_world(target.current_hex.x, target.current_hex.y)
 	var attack_vector = (attacker_pos - target_pos).normalized()
 	var target_forward = target.get_global_transform().basis.z.normalized()
 	

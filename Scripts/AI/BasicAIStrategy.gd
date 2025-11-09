@@ -20,10 +20,10 @@ func calculate_movement() -> Dictionary:
     if not best_target:
         return {"valid": false}
     
-    var path = hex_grid.find_unit_path(
+    var path = hex_grid.find_unit_path_3d(
         _current_unit,
-        _current_unit.grid_position,
-        best_target.grid_position
+        _current_unit.current_hex_3d,
+        best_target.current_hex_3d
     )
     
     # Get movement system to validate move
@@ -66,8 +66,8 @@ func _find_nearest_enemy() -> Unit:
     
     for enemy in _enemy_units:
         var distance = hex_grid.get_distance(
-            _current_unit.grid_position,
-            enemy.grid_position
+            _current_unit.current_hex,
+            enemy.current_hex
         )
         if distance < min_distance:
             min_distance = distance
@@ -91,8 +91,8 @@ func _select_best_weapon(target: Unit) -> WeaponData:
 func _calculate_weapon_score(weapon: WeaponData, target: Unit) -> float:
     # Simple scoring: damage potential adjusted by range
     var distance = hex_grid.get_distance(
-        _current_unit.grid_position,
-        target.grid_position
+        _current_unit.current_hex,
+        target.current_hex
     )
     
     var range_mod = 1.0 - clamp(

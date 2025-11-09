@@ -1,0 +1,274 @@
+[gd_scene load_steps=11 format=3 uid="uid://du4wj8sff238l"]
+
+[ext_resource type="Script" uid="uid://h0j86ict54td" path="res://Scripts/UI/BattleUIController.gd" id="1_agrd8"]
+[ext_resource type="PackedScene" uid="uid://jgaat841dpag" path="res://Prefabs/Terrain/Hex Decal.tscn" id="2_nc8xb"]
+[ext_resource type="Script" uid="uid://bj0wsvmp1hhf1" path="res://Scripts/UI/UnitStatusPanel.gd" id="3_uby4i"]
+[ext_resource type="Script" uid="uid://bvu41140a04rb" path="res://Scripts/UI/BottomActionPanel.gd" id="4_ajcho"]
+[ext_resource type="PackedScene" uid="uid://dsov3fs2uwu3h" path="res://UI/UnitIcon.tscn" id="6_77bkm"]
+[ext_resource type="Script" uid="uid://dx8eua6b6dway" path="res://Scripts/UI/InitiativeUITracker.gd" id="7_cebej"]
+[ext_resource type="Script" uid="uid://psdopsaxt3up" path="res://Scripts/UI/CombatLog.gd" id="8_yh17f"]
+[ext_resource type="Script" uid="uid://bl04dvtyr6h3v" path="res://Scripts/HexMap/Grid/HexHoverHighlighter.gd" id="9_nc8xb"]
+[ext_resource type="Script" uid="uid://d2xfqqwkg1tn2" path="res://Scripts/UI/HexClickHandler.gd" id="9_v7feo"]
+[ext_resource type="Script" uid="uid://dnegjrdnex6wn" path="res://Scripts/UI/HexInfoPanel.gd" id="10_nc8xb"]
+
+[node name="BattleUIController" type="CanvasLayer" node_paths=PackedStringArray("unit_status", "bottom_action_panel", "initiative", "combat_log", "hex_info_panel", "hex_hover_highlighter")]
+script = ExtResource("1_agrd8")
+unit_status = NodePath("UnitStatusPanel")
+bottom_action_panel = NodePath("BottomActionPanel")
+initiative = NodePath("InitiativePanel/Control/InitiativeTracker")
+combat_log = NodePath("CombatLog")
+unit_decal_scene = ExtResource("2_nc8xb")
+hex_info_panel = NodePath("HexInfoPanel")
+hex_hover_highlighter = NodePath("HexHoverHighlighter")
+metadata/_custom_type_script = "uid://h0j86ict54td"
+
+[node name="UnitStatusPanel" type="Panel" parent="." node_paths=PackedStringArray("armor_bar", "structure_bar", "heat_gauge", "unit_name", "moves_label")]
+anchors_preset = -1
+anchor_left = 0.0047014025
+anchor_top = 0.8055556
+anchor_right = 0.13939588
+anchor_bottom = 0.9940988
+offset_left = -0.41601563
+offset_right = 0.4159546
+offset_bottom = -0.17602539
+grow_horizontal = 2
+script = ExtResource("3_uby4i")
+armor_bar = NodePath("VBoxContainer/HBoxContainer/ArmorBar")
+structure_bar = NodePath("VBoxContainer/HBoxContainer/StructureBar")
+heat_gauge = NodePath("VBoxContainer/HeatBar")
+unit_name = NodePath("VBoxContainer/Name")
+moves_label = NodePath("VBoxContainer/Moves")
+metadata/_custom_type_script = "uid://bj0wsvmp1hhf1"
+metadata/_edit_use_anchors_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UnitStatusPanel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.051282052
+anchor_top = 0.07339449
+anchor_right = 0.9127657
+anchor_bottom = 0.89911014
+offset_right = 0.063999176
+offset_bottom = -0.0030021667
+metadata/_edit_use_anchors_ = true
+
+[node name="Name" type="Label" parent="UnitStatusPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Unit"
+
+[node name="Moves" type="Label" parent="UnitStatusPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Unit"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UnitStatusPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="StructureBar" type="ProgressBar" parent="UnitStatusPanel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 12
+
+[node name="ArmorBar" type="ProgressBar" parent="UnitStatusPanel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 12
+
+[node name="HeatBar" type="ProgressBar" parent="UnitStatusPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="End Turn" type="Button" parent="."]
+anchors_preset = -1
+anchor_left = 0.88859725
+anchor_top = 0.9057037
+anchor_right = 0.9973958
+anchor_bottom = 0.99691355
+offset_left = 0.3359375
+offset_top = 0.104003906
+grow_horizontal = 0
+grow_vertical = 0
+text = "End Turn"
+metadata/_edit_use_anchors_ = true
+
+[node name="BottomActionPanel" type="Control" parent="." node_paths=PackedStringArray("end_turn_btn", "actions_container")]
+layout_mode = 3
+anchor_left = 0.2109375
+anchor_top = 0.80700004
+anchor_right = 0.7890625
+anchor_bottom = 0.9444444
+offset_top = 0.063964844
+grow_horizontal = 2
+grow_vertical = 0
+size_flags_horizontal = 4
+size_flags_vertical = 8
+script = ExtResource("4_ajcho")
+end_turn_btn = NodePath("../End Turn")
+actions_container = NodePath("GridContainer")
+action_button_scene = ExtResource("6_77bkm")
+metadata/_custom_type_script = "uid://bvu41140a04rb"
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="BottomActionPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridContainer" type="HBoxContainer" parent="BottomActionPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="TextureRect" parent="BottomActionPanel/GridContainer" instance=ExtResource("6_77bkm")]
+layout_mode = 2
+
+[node name="TextureRect2" parent="BottomActionPanel/GridContainer" instance=ExtResource("6_77bkm")]
+layout_mode = 2
+
+[node name="InitiativePanel" type="Panel" parent="."]
+clip_contents = true
+custom_minimum_size = Vector2(300, 60)
+anchors_preset = -1
+anchor_left = 0.34100002
+anchor_right = 0.657
+anchor_bottom = 0.108024694
+offset_top = 5.0
+offset_bottom = 5.0
+grow_horizontal = 2
+size_flags_vertical = 0
+metadata/_edit_use_anchors_ = true
+
+[node name="Control" type="Control" parent="InitiativePanel"]
+layout_mode = 1
+anchor_left = 0.005955435
+anchor_top = 0.028571429
+anchor_right = 0.994506
+anchor_bottom = 0.9717143
+offset_right = 0.13598633
+offset_bottom = -0.020004272
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="TextureRect" parent="InitiativePanel/Control" instance=ExtResource("6_77bkm")]
+visible = false
+layout_mode = 0
+offset_right = 66.0
+offset_bottom = 66.0
+
+[node name="InitiativeTracker" type="HBoxContainer" parent="InitiativePanel/Control"]
+clip_contents = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+script = ExtResource("7_cebej")
+
+[node name="CombatLog" type="ScrollContainer" parent="." node_paths=PackedStringArray("log_container")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = 957.0
+offset_right = 1112.0
+offset_bottom = 160.0
+grow_horizontal = 0
+script = ExtResource("8_yh17f")
+log_container = NodePath("VBoxContainer")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CombatLog"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HexClickHandler" type="Node3D" parent="."]
+script = ExtResource("9_v7feo")
+metadata/_custom_type_script = "uid://d2xfqqwkg1tn2"
+
+[node name="HexHoverHighlighter" type="Node3D" parent="." node_paths=PackedStringArray("grid_manager", "decal_highlighter")]
+script = ExtResource("9_nc8xb")
+grid_manager = NodePath("")
+decal_highlighter = NodePath("")
+highlight_radius = 5
+center_color = Color(0.01666665, 1, 0, 1)
+enabled = false
+
+[node name="HexInfoPanel" type="Panel" parent="." node_paths=PackedStringArray("title_label", "coordinates_label", "elevation_label", "terrain_label", "movement_costs_label", "cover_label", "occupancy_label", "structure_label")]
+anchors_preset = -1
+anchor_left = 0.8072917
+anchor_top = 0.5123457
+anchor_right = 0.9933333
+anchor_bottom = 0.87372845
+offset_right = -0.3199997
+offset_bottom = -0.1760025
+size_flags_horizontal = 8
+size_flags_vertical = 8
+script = ExtResource("10_nc8xb")
+hover_delay = 0.0
+title_label = NodePath("VBoxContainer/Title")
+coordinates_label = NodePath("VBoxContainer/Coords")
+elevation_label = NodePath("VBoxContainer/Elevation")
+terrain_label = NodePath("VBoxContainer/Terrain")
+movement_costs_label = NodePath("VBoxContainer/Movement")
+cover_label = NodePath("VBoxContainer/Cover")
+occupancy_label = NodePath("VBoxContainer/Occupancy")
+structure_label = NodePath("VBoxContainer/Strucure")
+metadata/_edit_use_anchors_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HexInfoPanel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.018691588
+anchor_top = 0.027173912
+anchor_right = 0.9859813
+anchor_bottom = 0.9836956
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Title" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Title"
+
+[node name="Coords" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Elevation" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Terrain" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Movement" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Cover" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Occupancy" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Strucure" type="Label" parent="HexInfoPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12

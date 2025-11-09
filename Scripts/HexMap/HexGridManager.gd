@@ -176,8 +176,8 @@ func initialize_astar():
 		# Second pass: Create connections
 		for cell in hex_grid.values():
 			# Only process level 0 cells for the legacy system
-			if cell.level == 0:
-				_connect_cell_neighbors_legacy(cell, mobility)
+			#if cell.level == 0:
+			#	_connect_cell_neighbors_legacy(cell, mobility)
 			# Process all cells for the 3D system
 			_connect_cell_neighbors_3d(cell, mobility)
 
@@ -480,15 +480,14 @@ func move_unit(unit: Node3D, target_q: int, target_r: int, target_level: int = 0
 	return false
 
 ## Places unit and updates pathfinding graph
-func place_unit(unit: Node3D, q: int, r: int, level: int = 0) -> bool:
+func place_unit(unit: Unit, q: int, r: int, level: int = 0) -> bool:
 	var cell = get_cell_3d(q, r, level)
 	if cell and cell.unit == null:
 		cell.unit = unit
 		_unit_positions[unit] = cell
 		unit.position = cell.position
 		# Update unit's 3D position
-		if unit.has_method("set_hex_position_3d"):
-			unit.set_hex_position_3d(q, r, level)
+		unit.set_hex_position_3d(q, r, level)
 		return true
 	return false
 

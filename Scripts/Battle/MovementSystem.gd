@@ -50,7 +50,7 @@ func _ready():
 # @param target_hex: Target HexCell or axial coordinates
 # @return: Dictionary { valid: bool, reason: String, cost: float }
 func validate_move(unit: Unit, target_hex: HexCell) -> Dictionary:
-	var origin_cell = hex_grid.get_cell(unit.current_hex.x, unit.current_hex.y)
+	var origin_cell = hex_grid.get_cell_3d(unit.current_hex_3d.x, unit.current_hex_3d.y, unit.current_hex_3d.z)
 	var target_cell = target_hex
 	
 	var elevation_diff = target_cell.elevation - origin_cell.elevation
@@ -58,15 +58,15 @@ func validate_move(unit: Unit, target_hex: HexCell) -> Dictionary:
 		return { "valid": false, "reason": "Exceeds elevation change limit", "cost": 0.0 }
 	
 	# Get pathfinding data
-	var path = hex_grid.find_unit_path(unit, origin_cell.position, target_cell.position)
+	var path = hex_grid.find_unit_path_3d(unit, unit.current_hex_3d, target_hex.axial_coords_with_level)
 	if path.size() == 0:
 		return { "valid": false, "reason": "No valid path", "cost": 0.0 }
 	
 	# Calculate total movement cost
 	var total_cost = 0.0
 	for i in range(1, path.size()):
-		var prev_hex = hex_grid.get_cell(path[i - 1].x, path[i - 1].y)
-		var curr_hex = hex_grid.get_cell(path[i].x, path[i].y)
+		var prev_hex = path[i - 1]
+		var curr_hex = path[i]
 		total_cost += curr_hex.get_movement_cost(unit.mobility_type)
 		total_cost += _calculate_elevation_cost(prev_hex, curr_hex)
 		
@@ -93,7 +93,7 @@ func execute_move(unit: Unit, target_hex: HexCell) -> bool:
 	
 	# Update unit state
 	unit.remaining_mp -= validation.cost
-	_movement_paths[unit.uuid] = hex_grid.find_unit_path(unit, unit.current_hex, target_hex.axial_coords)
+	_movement_paths[unit.uuid] = hex_grid.find_unit_path_3d(unit, unit.current_hex_3d, target_hex.axial_coords_with_level)
 	
 	# Begin movement animation/processing
 	movement_started.emit(unit, _movement_paths[unit.uuid])
@@ -109,8 +109,8 @@ func finalize_movement(unit: Unit) -> void:
 	var path = _movement_paths[unit.uuid]
 	if path.size() > 0:
 		var target_cell = path[path.size() - 1]
-		hex_grid.move_unit(unit, target_cell.q, target_cell.r)
-		unit.current_hex = Vector2i(target_cell.q, target_cell.r)
+		hex_grid.move_unit(unit, target_cell.q, target_cell.r, target_cell.level)
+		unit.current_hex_3d = Vector3i(target_cell.q, target_cell.r, target_cell.level)
 	
 	_movement_paths.erase(unit.uuid)
 	movement_executed.emit(unit.uuid, path)
@@ -124,7 +124,7 @@ func finalize_movement(unit: Unit) -> void:
 func get_reachable_hexes(unit: Unit) -> Array[HexCell]:
 	var costs = {}
 	var pq = PriorityQueue.new()
-	var start_pos = unit.grid_position
+	var start_pos = unit.current_hex_3d
 	
 	# Initialize with unit's current position
 	pq.push(start_pos, 0.0)
@@ -136,9 +136,10 @@ func get_reachable_hexes(unit: Unit) -> Array[HexCell]:
 		# Split coordinates for neighbor lookup
 		var q = current.x
 		var r = current.y
+		var level = current.z
 		
-		for neighbor in hex_grid.get_neighbors(q, r):
-			var neighbor_pos = neighbor.axial_coords
+		for neighbor in hex_grid.get_neighbors_3d(q, r, level):
+			var neighbor_pos = neighbor.axial_coords_with_level
 			var move_cost = neighbor.get_movement_cost(unit.mobility_type)
 			var total_cost = costs[current] + move_cost
 			
@@ -147,7 +148,7 @@ func get_reachable_hexes(unit: Unit) -> Array[HexCell]:
 					costs[neighbor_pos] = total_cost
 					pq.push(neighbor_pos, total_cost)
 	
-	return costs.keys().map(func(pos): return hex_grid.get_cell(pos.x, pos.y))
+	return costs.keys().map(func(pos): return hex_grid.get_cell_3d(pos.x, pos.y, pos.z))
 ###
 ### 
 # Calculate elevation change cost between hexes
@@ -163,6 +164,6 @@ func _calculate_elevation_cost(from_cell: HexCell, to_cell: HexCell) -> float:
 ### 
 # Reset movement state after turn
 func reset_movement(unit: Unit) -> void:
-	unit.remaining_mp = unit.base_movement
+	unit.remaining_mp = unit.get_max_mp()
 	_movement_paths.erase(unit.uuid)
 ###

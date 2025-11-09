@@ -45,7 +45,7 @@ var terrain_size
 # Multi-level generation parameters
 @export var max_levels: int = 5  # Maximum number of levels to generate
 @export var level_spacing: float = 3.0  # Vertical spacing between levels
-@export var enable_multi_level_generation: bool = false  # Toggle for multi-level generation
+@export var enable_multi_level_generation: bool = true  # Toggle for multi-level generation
 
 func _ready() -> void:
 	
@@ -102,19 +102,22 @@ func generate_grid():
 				
 				var world_pos = axial_to_world(q, r)
 				#world_pos = world_pos-offset
-				var elevation = await sample_terrain_height(world_pos)
+				var elevation = sample_terrain_height(world_pos)
+				var level: int = elevation / level_spacing
 				
-				var cell = HexCell.new(q, r, elevation, grid_manager, Vector3.ZERO, 0)  # Level 0 for ground level
+				var cell = HexCell.new(q, r, elevation, grid_manager, Vector3.ZERO, level)  # Level 0 for ground level
 				
+				cell.terrain_data = default_terrain_data
+
 				if terrain_mesh.data.get_texture_id(world_pos) != null:
 					if terrain_datas.size() > int(terrain_mesh.data.get_texture_id(world_pos).x) and terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)] != null and not terrain_mesh.data.get_control_auto(world_pos):
 						cell.terrain_data = terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)]
-				else:
-					cell.terrain_data = default_terrain_data
-					
+				
+				
 				if get_terrain_slope_angle(world_pos) > 40:
 					cell.terrain_data = slope_terrain_data
-				cell.position = grid_manager.axial_to_world_3d(q, r, 0)  # Position with level 0 using HexGridManager function
+					
+				cell.position = grid_manager.axial_to_world_3d(q, r, level)  # Position with level 0 using HexGridManager function
 				cell.elevation = elevation
 				cells.append(cell)
 				add_child(cell)
@@ -147,8 +150,8 @@ func _generate_level_cells(half_width: int, half_height: int, level: int, offset
 			# For higher levels, terrain data might be different based on structure
 			if level == 0:  # Ground level
 				if terrain_mesh.data.get_texture_id(world_pos) != null:
-					if terrain_datas.size() > int(terrain_mesh.data.get_texture_id(world_pos).x) and terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)] != null and not terrain_mesh.data.get_control_auto(world_pos):
-						cell.terrain_data = terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)]
+					#if terrain_datas.size() > int(terrain_mesh.data.get_texture_id(world_pos).x) and terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)] != null and not terrain_mesh.data.get_control_auto(world_pos):
+					cell.terrain_data = terrain_datas[int(terrain_mesh.data.get_texture_id(world_pos).x)]
 				else:
 					cell.terrain_data = default_terrain_data
 					

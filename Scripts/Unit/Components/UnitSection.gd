@@ -14,6 +14,12 @@ class_name UnitSection
 @export var critical_damage_multiplier: float = 2.0 # BattleTech doubles crit damage
 @export var structure_damage_threshold: float = 0.0 # Structure damage threshold for critical effects
 
+### Hit Profile Properties ###
+@export var front_hit_chance: float = 25.0
+@export var rear_hit_chance: float = 25.0
+@export var left_hit_chance: float = 25.0
+@export var right_hit_chance: float = 25.0
+
 
 ## Emitted when armor takes damage (amount, remaining)
 signal armor_damaged(amount: float, remaining: float)

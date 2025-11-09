@@ -115,7 +115,7 @@ func _get_unit_tooltip(unit: Unit) -> String:
         "armor": _format_armor(unit),
         "structure": _format_structure(unit),
         "heat": _format_heat(unit),
-        "mp": "%d/%d" % [unit.remaining_mp, unit.stats.movement_range]
+        "mp": "%d/%d" % [unit.remaining_mp, unit.get_max_mp()]
     })
     
     # Weapons section

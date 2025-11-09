@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dsov3fs2uwu3h"]
+[gd_scene load_steps=4 format=3 uid="uid://dsov3fs2uwu3h"]
 
 [ext_resource type="Texture2D" uid="uid://ccinc08txerxi" path="res://icon.svg" id="1_71h4w"]
-[ext_resource type="PackedScene" path="res://UI/UnitIcon old.tscn" id="2_7ppgq"]
+[ext_resource type="PackedScene" uid="uid://ctmy4n1gfwi0j" path="res://UI/UnitIcon old.tscn" id="2_7ppgq"]
+[ext_resource type="Script" uid="uid://xyd0ubdfjv6e" path="res://Scripts/UI/ActionButton.gd" id="3_7ppgq"]
 
 [node name="TextureRect" type="TextureRect"]
 self_modulate = Color(1, 1, 1, 0)
@@ -21,3 +22,4 @@ grow_vertical = 2
 size_flags_horizontal = 3
 icon = ExtResource("1_71h4w")
 expand_icon = true
+script = ExtResource("3_7ppgq")

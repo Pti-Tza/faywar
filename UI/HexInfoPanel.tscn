@@ -1,5 +1,63 @@
-[gd_scene format=3]
+[gd_scene load_steps=5 format=3 uid="uid://hexinfopanel_scene"]
+[ext_resource type="Theme" uid="uid://hexinfopanel_theme" path="res://UI/DefaultUITheme.tres" id="1_default_theme"]
 
-[node name="HexInfoPanel" type="Control"]
+[node name="HexInfoPanel" type="Control" uid="uid://hexinfopanel_root"]
+script = null
 
+[node name="VBoxContainer" type="VBoxContainer" parent="." uid="uid://hexinfopanel_vbox"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 310.0
+offset_bottom = 260.0
+size = Vector2(300, 250)
 
+[node name="TitleLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_titlelabel"]
+text = "Hex Information"
+horizontal_alignment = 1
+vertical_alignment = 1
+size_flags_vertical = 0
+
+[node name="CoordinatesLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_coordslabel"]
+text = "Coordinates: (0, 0, 0)"
+horizontal_alignment = 0
+vertical_alignment = 1
+size_flags_vertical = 0
+
+[node name="ElevationLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_elevationlabel"]
+text = "Elevation: 0"
+horizontal_alignment = 0
+vertical_alignment = 1
+size_flags_vertical = 0
+
+[node name="TerrainLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_terrainlabel"]
+text = "Terrain: Unknown"
+horizontal_alignment = 0
+vertical_alignment = 1
+size_flags_vertical = 0
+theme = ExtResource(1_default_theme)
+
+[node name="MovementCostsLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_movementlabel"]
+text = "Movement Costs:\n  Data unavailable"
+horizontal_alignment = 0
+vertical_alignment = 1
+size_flags_vertical = 0
+
+[node name="CoverLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_coverlabel"]
+text = "Cover: None"
+horizontal_alignment = 0
+vertical_alignment = 1
+size_flags_vertical = 0
+
+[node name="OccupancyLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_occupancylabel"]
+text = "Occupied: None"
+horizontal_alignment = 0
+vertical_alignment = 1
+size_flags_vertical = 0
+
+[node name="StructureLabel" type="Label" parent="VBoxContainer" uid="uid://hexinfopanel_structurelabel"]
+text = "Structure: Ground"
+horizontal_alignment = 0
+vertical_alignment = 1
+size_flags_vertical = 0

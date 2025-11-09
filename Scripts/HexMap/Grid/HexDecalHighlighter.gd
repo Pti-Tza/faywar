@@ -9,10 +9,10 @@ extends Node3D
 
 var _decals_pool: Array[Decal] = []
 var _active_decals: Array[Decal] = []
-
+static var instance : HexDecalHighlighter 
 
 func _ready():
-
+	instance = self
 	_initialize_decal_pool()
 
 func _initialize_decal_pool():

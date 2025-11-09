@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://dmh272oocjtjx"]
+[gd_scene load_steps=9 format=3 uid="uid://dmh272oocjtjx"]
 
 [ext_resource type="Script" uid="uid://dsqank2mq43l8" path="res://Scripts/Unit/Unit.gd" id="1_8kbjo"]
 [ext_resource type="Texture2D" uid="uid://ccinc08txerxi" path="res://icon.svg" id="2_2dc8s"]
@@ -6,24 +6,17 @@
 [ext_resource type="Script" uid="uid://ctqdujl8i3k6i" path="res://Scripts/Unit/Components/ComponentData.gd" id="3_ntpb6"]
 [ext_resource type="Resource" uid="uid://ckqcxxt6e3adp" path="res://Resources/Unit Components/Vehicle Crew.tres" id="4_2dc8s"]
 [ext_resource type="Script" uid="uid://csqf1jmpkih4v" path="res://Scripts/Unit/HeatSystem.gd" id="6_52bjb"]
+[ext_resource type="Script" uid="uid://s1gftnok3hxp" path="res://Scripts/Unit/HitProfile.gd" id="7_0nh8e"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_dih5f"]
 
-[node name="TestTank" type="Node3D"]
+[node name="TestTank" type="Node3D" node_paths=PackedStringArray("heat_system", "hit_profile")]
 script = ExtResource("1_8kbjo")
 unit_name = "Test Tank"
-base_heat_capacity = null
-base_heat_dissipation = null
 mobility_type = 3
-max_elevation_change = null
 icon = ExtResource("2_2dc8s")
-walk_mp = null
-run_mp_bonus = null
-jump_mp = null
-team = null
-initiative = null
-agility = null
-unit_id = null
+heat_system = NodePath("HeatSystem")
+hit_profile = NodePath("HitProfile")
 
 [node name="TurretMesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(2.6294658, 0, 0, 0, 2.619909, 0, 0, 0, 2.6363654, -0.0002281635, 2.7892964, 1.076314)
@@ -70,3 +63,7 @@ metadata/_custom_type_script = "uid://bwmd4vednmjix"
 [node name="HeatSystem" type="Node" parent="."]
 script = ExtResource("6_52bjb")
 metadata/_custom_type_script = "uid://csqf1jmpkih4v"
+
+[node name="HitProfile" type="Node" parent="."]
+script = ExtResource("7_0nh8e")
+metadata/_custom_type_script = "uid://s1gftnok3hxp"

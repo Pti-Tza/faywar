@@ -43,8 +43,8 @@ func _calculate_base_to_hit(attacker: Unit, target: Unit, weapon: WeaponData) ->
 
 func _get_range_modifier(attacker: Unit, target: Unit, weapon: WeaponData) -> int:
 	var distance = hex_grid.get_distance(
-		attacker.grid_position,
-		target.grid_position
+		attacker.current_hex,
+		target.current_hex
 	)
 	
 	if distance <= weapon.minimum_range:
@@ -82,8 +82,8 @@ func _process_hit(attacker: Unit, target: Unit, weapon: WeaponData, dice_roll: i
 	return hit
 
 func _get_attack_angle(attacker: Unit, target: Unit) -> float:
-	var attacker_pos = hex_grid.get_world_position(attacker.grid_position)
-	var target_pos = hex_grid.get_world_position(target.grid_position)
+	var attacker_pos = hex_grid.axial_to_world(attacker.current_hex.x, attacker.current_hex.y)
+	var target_pos = hex_grid.axial_to_world(target.current_hex.x, target.current_hex.y)
 	var direction_vector = (attacker_pos - target_pos).normalized()
 	return rad_to_deg(direction_vector.angle_to(target.facing_direction))
 

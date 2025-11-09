@@ -11,20 +11,20 @@ signal hex_unhovered
 
 var current_hex_cell: HexCell = null
 var hover_timer := 0.0
-var hover_delay := 0.1  # Delay in seconds before showing info
+@export var hover_delay := 0.1  # Delay in seconds before showing info
 
 @export var show_on_hover := true  # Whether to show info on hover or only when requested
 @export var auto_update := true    # Whether to automatically update the panel
 
 # UI elements that will be populated with hex information
-@onready var title_label: Label = $VBoxContainer/TitleLabel
-@onready var coordinates_label: Label = $VBoxContainer/CoordinatesLabel
-@onready var elevation_label: Label = $VBoxContainer/ElevationLabel
-@onready var terrain_label: Label = $VBoxContainer/TerrainLabel
-@onready var movement_costs_label: Label = $VBoxContainer/MovementCostsLabel
-@onready var cover_label: Label = $VBoxContainer/CoverLabel
-@onready var occupancy_label: Label = $VBoxContainer/OccupancyLabel
-@onready var structure_label: Label = $VBoxContainer/StructureLabel
+@export var title_label: Label 
+@export var coordinates_label: Label 
+@export var elevation_label: Label 
+@export var terrain_label: Label 
+@export var movement_costs_label: Label 
+@export var cover_label: Label 
+@export var occupancy_label: Label 
+@export var structure_label: Label 
 
 func _ready() -> void:
 	# Hide the panel by default

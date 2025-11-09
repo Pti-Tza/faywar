@@ -31,7 +31,7 @@ var _current_unit: Unit
 	# Reference to the unit currently controlled
 
 # Team aligment
-var team_index: int = 0
+@export var team_index: int = 0
 
 func is_ally(other_controller: BaseController) -> bool:
 	return TeamManager.instance.are_allies(team_index, other_controller.team_index)

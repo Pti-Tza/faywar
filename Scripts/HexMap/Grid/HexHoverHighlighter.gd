@@ -22,6 +22,9 @@ var _last_position: Vector3 = Vector3.ZERO
 var _update_threshold: float = 0.1  # Update when cursor moves this far
 
 func _ready():
+	await get_tree().process_frame
+	grid_manager = HexGridManager.instance
+	decal_highlighter = HexDecalHighlighter.instance
 	# Validate dependencies
 	assert(grid_manager != null, "HexGridManager reference required")
 	assert(decal_highlighter != null, "DecalHighlighter reference required")
@@ -41,13 +44,13 @@ func _process(_delta):
 
 func _update_hover_highlight(cursor_pos: Vector3):
 	#print(" cursor", cursor_pos)
-	var new_center : HexCell = grid_manager.get_cell_at_position(cursor_pos)
-	#print(" axial ", grid_manager.world_to_axial(cursor_pos))
+	var new_center : HexCell = grid_manager.get_cell_at_position_3d(cursor_pos)
+	#print(" axial ", grid_manager.world_to_axial_3d(cursor_pos))
 	
 	if new_center==null:
 		return
 	
-	#print(" coords", new_center.axial_coords)
+	#print(" coords", new_center.axial_coords_with_level)
 	# Only update if center cell changed
 	if new_center != _current_center:
 		_current_center = new_center
@@ -58,7 +61,7 @@ func _highlight_circle(center_cell: HexCell):
 		decal_highlighter.clear_highlights()
 		return
 	
-	var cells : Array[HexCell] = grid_manager.get_cells_in_range(center_cell.axial_coords, highlight_radius)
+	var cells : Array[HexCell] = grid_manager.get_cells_in_range_3d(center_cell.axial_coords_with_level, highlight_radius)
 	var colored_cells = []
 	
 	if(cells.size()==0):
@@ -66,8 +69,9 @@ func _highlight_circle(center_cell: HexCell):
 	
 	# Apply different colors based on distance
 	for cell in cells:
+	# Calculate distance using 2D coordinates for the ring effect
 		var distance = grid_manager.get_hex_distance(
-			center_cell.axial_coords, 
+			center_cell.axial_coords,
 			cell.axial_coords
 		)
 		

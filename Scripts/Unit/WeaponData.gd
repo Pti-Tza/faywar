@@ -29,3 +29,18 @@ enum WeaponType { BALLISTIC, ENERGY, MISSILE, ARTILLERY }
 @export var optimal_range: int = 10
 @export var maximum_range: int = 20
 @export var projectile_per_attack : int = 1
+
+# Current ammo tracking
+var current_ammo: int:
+	get:
+		if max_ammo > 0:
+			# If max_ammo is defined, use current ammo (default to max if not set)
+			if not has_meta("current_ammo_value"):
+				set_meta("current_ammo_value", max_ammo)
+			return get_meta("current_ammo_value")
+		else:
+			return -1  # Indicate unlimited ammo
+	set(value):
+		if max_ammo > 0:
+			var clamped_value = clamp(value, 0, max_ammo)
+			set_meta("current_ammo_value", clamped_value)

@@ -1,18 +1,17 @@
 # HitProfile.gd
-extends Resource
+extends Node
 class_name HitProfile
 
 ## Defines hit probabilities for different unit sections based on attack angle
 ## This resource allows for easy configuration of which sections can be hit from different angles
 
-@export_group("Hit Probabilities by Direction")
-@export var front_hit_weights: Dictionary = {"Front": 70, "Left": 15, "Right": 15}
-@export var rear_hit_weights: Dictionary = {"Rear": 70, "Left": 15, "Right": 15}
-@export var left_hit_weights: Dictionary = {"Left": 60, "Front": 20, "Rear": 20}
-@export var right_hit_weights: Dictionary = {"Right": 60, "Front": 20, "Rear": 20}
+var front_hit_weights: Dictionary = {}
+var rear_hit_weights: Dictionary = {}
+var left_hit_weights: Dictionary = {}
+var right_hit_weights: Dictionary = {}
 
 ## Define which sections exist on this unit for hit probability calculations
-@export var valid_sections: Array[String] = ["Front", "Rear", "Left", "Right", "Turret", "Head"]
+var valid_sections: Array[UnitSection] = []
 
 ## Get hit weights based on attack angle (in degrees)
 func get_hit_weights_for_angle(attack_angle: float) -> Dictionary:
@@ -26,18 +25,3 @@ func get_hit_weights_for_angle(attack_angle: float) -> Dictionary:
 		return rear_hit_weights
 	else: # -135 to -45
 		return left_hit_weights
-
-## Normalize weights so they sum to 10 for probability calculations
-func normalize_weights(weights: Dictionary) -> Dictionary:
-	var total = 0.0
-	for value in weights.values():
-		total += value
-	
-	if total == 0:
-		return weights
-	
-	var normalized = {}
-	for section in weights.keys():
-		normalized[section] = weights[section] / total
-	
-	return normalized

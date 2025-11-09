@@ -46,8 +46,8 @@ func _get_attack_handler(weapon: WeaponData) -> AttackHandler:
 
 func _validate_attack(attacker: Unit, target: Unit, weapon: WeaponData) -> bool:
 	var distance = hex_grid.get_distance(
-		attacker.grid_position,
-		target.grid_position
+		attacker.current_hex,
+		target.current_hex
 	)
 	return (
 		distance >= weapon.minimum_range &&

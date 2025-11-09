@@ -8,7 +8,7 @@ extends Node3D
 ## Coordinates are managed in axial (q,r) format with cube coordinate validation.
 
 ## Axial coordinates (q, r) - read only after creation
-var axial_coordss: Vector2i = Vector2i.ZERO
+var axial_coords: Vector2i = Vector2i.ZERO
 
 ## Level coordinate (z-axis) - 0 = ground level, positive = upper floors, negative = underground
 @export var level: int = 0
@@ -19,15 +19,15 @@ var q: int : get = get_q
 var r: int : get = get_r
 
 func get_q() -> int:
-	return axial_coordss.x
+	return axial_coords.x
 
 func get_r() -> int:
-	return axial_coordss.y
+	return axial_coords.y
 
 ## Coordinate property that includes level
 var axial_coords_with_level: Vector3i:
 	get:
-		return Vector3i(axial_coordss.x, axial_coordss.y, level)
+		return Vector3i(axial_coords.x, axial_coords.y, level)
 
 var _global_position: Vector3:
 	get:
@@ -141,7 +141,7 @@ func _init(q2: int, r2: int, e: float = 0, manager: HexGridManager = null, world
 		grid_manager=manager
 	
 	position = world_pos
-	axial_coordss = Vector2i(q2, r2)
+	axial_coords = Vector2i(q2, r2)
 	elevation = e
 	level = cell_level
 	name = "HexCell(%d,%d,%d)" % [q2, r2, e]
