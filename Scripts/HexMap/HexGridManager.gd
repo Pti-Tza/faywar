@@ -489,7 +489,46 @@ func place_unit(unit: Unit, q: int, r: int, level: int = 0) -> bool:
 		# Update unit's 3D position
 		unit.set_hex_position_3d(q, r, level)
 		return true
+	else:
+		# If the specified cell is invalid or occupied, find the nearest valid cell
+		var nearest_valid_cell = _find_nearest_valid_cell(q, r, level, unit)
+		if nearest_valid_cell:
+			nearest_valid_cell.unit = unit
+			_unit_positions[unit] = nearest_valid_cell
+			unit.position = nearest_valid_cell.position
+			# Update unit's 3D position
+			unit.set_hex_position_3d(nearest_valid_cell.q, nearest_valid_cell.r, nearest_valid_cell.level)
+			return true
 	return false
+
+## Finds the nearest valid cell to the specified coordinates
+func _find_nearest_valid_cell(target_q: int, target_r: int, target_level: int, unit: Unit = null) -> HexCell:
+	var search_radius = 1
+	var max_search_radius = 10  # Limit search to prevent infinite loops
+	
+	while search_radius <= max_search_radius:
+		# Get all cells within the current search radius in 3D space
+		var cells_in_range = get_cells_in_range_3d(Vector3i(target_q, target_r, target_level), search_radius)
+		
+		# Find the closest valid cell
+		var closest_valid_cell: HexCell = null
+		var min_distance = INF
+		
+		for cell in cells_in_range:
+			# Check if cell is valid (exists and unoccupied)
+			if cell and cell.unit == null:
+				# Calculate 3D distance considering level difference
+				var distance = get_hex_distance3d(Vector3i(target_q, target_r, target_level), Vector3i(cell.q, cell.r, cell.level))
+				if distance < min_distance:
+					min_distance = distance
+					closest_valid_cell = cell
+		
+		if closest_valid_cell:
+			return closest_valid_cell
+		
+		search_radius += 1
+	
+	return null
 
 
 #endregion
@@ -584,6 +623,12 @@ func get_hex_distance(start_hex: Vector2i, end_hex: Vector2i) -> float:
 	var q2 = end_hex.x
 	var r2 = end_hex.y
 	return float((abs(q1 - q2) + abs(r1 - r2) + abs(q1 + r1 - q2 - r2)) / 2)
+
+## Gets 3D hex distance considering level differences
+func get_hex_distance3d(start_hex: Vector3i, end_hex: Vector3i) -> float:
+	var horizontal_distance = get_hex_distance(Vector2i(start_hex.x, start_hex.y), Vector2i(end_hex.x, end_hex.y))
+	var vertical_distance = abs(start_hex.z - end_hex.z)  # z component represents level
+	return horizontal_distance + vertical_distance
 
 ## Gets a path of hexes between two coordinates ignoring terrain and mobility constraints
 ## @param start_hex: Starting hex coordinates (Vector2i)

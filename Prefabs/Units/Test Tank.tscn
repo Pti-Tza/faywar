@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dmh272oocjtjx"]
+[gd_scene load_steps=10 format=3 uid="uid://dmh272oocjtjx"]
 
 [ext_resource type="Script" uid="uid://dsqank2mq43l8" path="res://Scripts/Unit/Unit.gd" id="1_8kbjo"]
 [ext_resource type="Texture2D" uid="uid://ccinc08txerxi" path="res://icon.svg" id="2_2dc8s"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://ctqdujl8i3k6i" path="res://Scripts/Unit/Components/ComponentData.gd" id="3_ntpb6"]
 [ext_resource type="Resource" uid="uid://ckqcxxt6e3adp" path="res://Resources/Unit Components/Vehicle Crew.tres" id="4_2dc8s"]
 [ext_resource type="Script" uid="uid://csqf1jmpkih4v" path="res://Scripts/Unit/HeatSystem.gd" id="6_52bjb"]
+[ext_resource type="Resource" uid="uid://dopyxg4srxj7f" path="res://Resources/Unit Components/TestGun.tres" id="6_r2jha"]
 [ext_resource type="Script" uid="uid://s1gftnok3hxp" path="res://Scripts/Unit/HitProfile.gd" id="7_0nh8e"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_dih5f"]
@@ -51,7 +52,7 @@ mesh = SubResource("BoxMesh_dih5f")
 [node name="UnitSection Hull" type="Node" parent="."]
 script = ExtResource("2_dih5f")
 section_name = "Hull"
-components = Array[ExtResource("3_ntpb6")]([ExtResource("4_2dc8s"), null, null, null])
+components = Array[ExtResource("3_ntpb6")]([ExtResource("4_2dc8s"), ExtResource("6_r2jha"), null, null])
 critical = true
 metadata/_custom_type_script = "uid://bwmd4vednmjix"
 

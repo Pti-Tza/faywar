@@ -8,6 +8,7 @@ class_name HexHoverHighlighter
 @export var highlight_radius: int = 2
 @export var center_color: Color = Color.YELLOW
 @export var ring_color: Color = Color(0.5, 0.5, 0, 0.7)  # Semi-transparent amber
+@export var ball: Node3D
 
 @export var enabled: bool = true:
 	set(value):
@@ -39,6 +40,7 @@ func _process(_delta):
 	var cursor_pos : Vector3 = _get_cursor_world_position()
 	if cursor_pos.distance_to(_last_position) > _update_threshold:
 		_update_hover_highlight(cursor_pos)
+		ball.global_position = cursor_pos
 		#print(" pos ", cursor_pos)
 		_last_position = cursor_pos
 
@@ -59,6 +61,16 @@ func _update_hover_highlight(cursor_pos: Vector3):
 func _highlight_circle(center_cell: HexCell):
 	if !center_cell:
 		decal_highlighter.clear_highlights()
+		return
+	
+	# If highlight_radius is 0, highlight only the center cell
+	if highlight_radius == 0:
+		var colored_cells = [{
+			"cell": center_cell,
+			"color": center_color
+		}]
+		# Update decals with new highlights
+		decal_highlighter.highlight_colored_cells(colored_cells)
 		return
 	
 	var cells : Array[HexCell] = grid_manager.get_cells_in_range_3d(center_cell.axial_coords_with_level, highlight_radius)
@@ -108,7 +120,7 @@ func _get_cursor_world_position() -> Vector3:
 	return result.position if result else ray_end
 
 func set_highlight_radius(new_radius: int):
-	highlight_radius = clamp(new_radius, 1, 5)
+	highlight_radius = clamp(new_radius, 0, 5)
 	if _current_center:
 		_highlight_circle(_current_center)
 

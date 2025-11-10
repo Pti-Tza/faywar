@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://du4wj8sff238l"]
+[gd_scene load_steps=12 format=3 uid="uid://du4wj8sff238l"]
 
 [ext_resource type="Script" uid="uid://h0j86ict54td" path="res://Scripts/UI/BattleUIController.gd" id="1_agrd8"]
 [ext_resource type="PackedScene" uid="uid://jgaat841dpag" path="res://Prefabs/Terrain/Hex Decal.tscn" id="2_nc8xb"]
@@ -10,6 +10,8 @@
 [ext_resource type="Script" uid="uid://bl04dvtyr6h3v" path="res://Scripts/HexMap/Grid/HexHoverHighlighter.gd" id="9_nc8xb"]
 [ext_resource type="Script" uid="uid://d2xfqqwkg1tn2" path="res://Scripts/UI/HexClickHandler.gd" id="9_v7feo"]
 [ext_resource type="Script" uid="uid://dnegjrdnex6wn" path="res://Scripts/UI/HexInfoPanel.gd" id="10_nc8xb"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_nc8xb"]
 
 [node name="BattleUIController" type="CanvasLayer" node_paths=PackedStringArray("unit_status", "bottom_action_panel", "initiative", "combat_log", "hex_info_panel", "hex_hover_highlighter")]
 script = ExtResource("1_agrd8")
@@ -199,13 +201,16 @@ offset_bottom = 40.0
 script = ExtResource("9_v7feo")
 metadata/_custom_type_script = "uid://d2xfqqwkg1tn2"
 
-[node name="HexHoverHighlighter" type="Node3D" parent="." node_paths=PackedStringArray("grid_manager", "decal_highlighter")]
+[node name="HexHoverHighlighter" type="Node3D" parent="." node_paths=PackedStringArray("ball")]
 script = ExtResource("9_nc8xb")
-grid_manager = NodePath("")
-decal_highlighter = NodePath("")
-highlight_radius = 5
+highlight_radius = 0
 center_color = Color(0.01666665, 1, 0, 1)
+ball = NodePath("MeshInstance3D")
 enabled = false
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="HexHoverHighlighter"]
+transform = Transform3D(11.195, 0, 0, 0, 11.195, 0, 0, 0, 11.195, 0, 0, 0)
+mesh = SubResource("SphereMesh_nc8xb")
 
 [node name="HexInfoPanel" type="Panel" parent="." node_paths=PackedStringArray("title_label", "coordinates_label", "elevation_label", "terrain_label", "movement_costs_label", "cover_label", "occupancy_label", "structure_label")]
 anchors_preset = -1
