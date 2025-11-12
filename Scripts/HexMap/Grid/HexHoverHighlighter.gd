@@ -20,7 +20,7 @@ class_name HexHoverHighlighter
 
 var _current_center: HexCell = null
 var _last_position: Vector3 = Vector3.ZERO
-var _update_threshold: float = 0.1  # Update when cursor moves this far
+var _update_threshold: float = 0.01  # Update when cursor moves this far
 
 func _ready():
 	await get_tree().process_frame
@@ -37,20 +37,36 @@ func _process(_delta):
 	if !enabled:
 		return
 	# Only update if cursor has moved significantly
-	var cursor_pos : Vector3 = _get_cursor_world_position()
+	var ray_result = _get_cursor_world_position_with_hit()
+	var cursor_pos : Vector3 = ray_result.position
 	if cursor_pos.distance_to(_last_position) > _update_threshold:
-		_update_hover_highlight(cursor_pos)
-		ball.global_position = cursor_pos
+		_update_hover_highlight_with_ray_result(ray_result)
+		if ray_result.hit:
+			ball.global_position = cursor_pos
+		else:
+			# Hide or position the ball elsewhere when not hitting anything
+			ball.global_position = Vector3.INF
 		#print(" pos ", cursor_pos)
 		_last_position = cursor_pos
 
-func _update_hover_highlight(cursor_pos: Vector3):
-	#print(" cursor", cursor_pos)
-	var new_center : HexCell = grid_manager.get_cell_at_position_3d(cursor_pos)
-	#print(" axial ", grid_manager.world_to_axial_3d(cursor_pos))
+func _update_hover_highlight_with_ray_result(ray_result: Dictionary):
+	#print(" cursor", ray_result.position)
 	
-	if new_center==null:
+	# Only proceed if the ray actually hit something
+	if !ray_result.hit:
+		# Clear highlights if not hitting anything
+		decal_highlighter.clear_highlights()
+		_current_center = null
 		return
+	
+	var new_center : HexCell = grid_manager.get_cell_at_position_3d(ray_result.position)
+	
+	
+	
+	if new_center == null:
+		return
+
+		
 	
 	#print(" coords", new_center.axial_coords_with_level)
 	# Only update if center cell changed
@@ -117,7 +133,29 @@ func _get_cursor_world_position() -> Vector3:
 	params.collide_with_areas = true
 	
 	var result = get_world_3d().direct_space_state.intersect_ray(params)
-	return result.position if result else ray_end
+	return result.position if result and result.size() > 0 else ray_end
+
+# Returns a dictionary with position and hit status
+func _get_cursor_world_position_with_hit() -> Dictionary:
+	var camera = get_viewport().get_camera_3d()
+	var mouse_pos = get_viewport().get_mouse_position()
+	
+	# Create ray from camera through mouse position
+	var ray_origin = camera.project_ray_origin(mouse_pos)
+	var ray_dir = camera.project_ray_normal(mouse_pos)
+	var ray_end = ray_origin + ray_dir * 1000
+	
+	# Perform raycast against terrain
+	var params = PhysicsRayQueryParameters3D.new()
+	params.from = ray_origin
+	params.to = ray_end
+	params.collide_with_areas = true
+	
+	var result = get_world_3d().direct_space_state.intersect_ray(params)
+	var hit_position = result.position if result and result.size() > 0 else ray_end
+	var hit_occurred = result and result.size() > 0
+	
+	return {"position": hit_position, "hit": hit_occurred}
 
 func set_highlight_radius(new_radius: int):
 	highlight_radius = clamp(new_radius, 0, 5)

@@ -566,7 +566,7 @@ func _reset_mobility() -> void:
 #region Coordinate Conversions
 ## Converts axial coordinates (q, r) to world space position
 func axial_to_world(q: int, r: int) -> Vector3:
-	var x = (q + r * 0.5) * inner_radius * 2.0
+	var x = (q + r * 0.5) * outer_radius * sqrt(3.0)
 	var z = r * outer_radius * 1.5
 	return Vector3(x, 0, z)
 
@@ -578,16 +578,20 @@ func axial_to_world_3d(q: int, r: int, level: int) -> Vector3:
 
 ## Converts world space position to axial coordinates (q, r)
 func world_to_axial(world_pos: Vector3) -> Vector2i:
-	var q = (sqrt(3) / 3 * world_pos.x - 1.0 / 3 * world_pos.z) / inner_radius
-	var r = (2.0 / 3 * world_pos.z) / outer_radius
-	return cube_to_axial(round_axial(q, r))
+	# Inverse of axial_to_world function
+	# From axial_to_world: x = (q + r * 0.5) * outer_radius * sqrt(3.0), z = r * outer_radius * 1.5
+	var r_float = world_pos.z / (outer_radius * 1.5)
+	var q_float = (world_pos.x / (outer_radius * sqrt(3.0))) - (r_float * 0.5)
+	return cube_to_axial(round_axial(q_float, r_float))
 
 ## Converts world space position to 3D axial coordinates (q, r, level)
 func world_to_axial_3d(world_pos: Vector3) -> Vector3i:
-	var q = (sqrt(3) / 3 * world_pos.x - 1.0 / 3 * world_pos.z) / inner_radius
-	var r = (2.0 / 3 * world_pos.z) / outer_radius
+	# Inverse of axial_to_world function
+	# From axial_to_world: x = (q + r * 0.5) * outer_radius * sqrt(3.0), z = r * outer_radius * 1.5
+	var r_float = world_pos.z / (outer_radius * 1.5)
+	var q_float = (world_pos.x / (outer_radius * sqrt(3.0))) - (r_float * 0.5)
 	var level = int(world_pos.y / level_height_step)
-	var axial_2d = cube_to_axial(round_axial(q, r))
+	var axial_2d = cube_to_axial(round_axial(q_float, r_float))
 	return Vector3i(axial_2d.x, axial_2d.y, level)
 
 
@@ -692,10 +696,9 @@ func get_cell_at_position(pos: Vector3) -> HexCell:
 
 ## Gets cell at 3D world position
 func get_cell_at_position_3d(pos: Vector3) -> HexCell:
-	var axial : Vector2i  = world_to_axial(pos)
-	var level = int(pos.y / level_height_step)
+	var axial_3d : Vector3i = world_to_axial_3d(pos)
 	
-	return get_cell_3d(axial.x, axial.y, level)
+	return get_cell_3d(axial_3d.x, axial_3d.y, axial_3d.z)
 
 ## Gets all valid neighboring cells for given coordinates at same level
 func get_neighbors(q: int, r: int, level: int = 0) -> Array[HexCell]:
